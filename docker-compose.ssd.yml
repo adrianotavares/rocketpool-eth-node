@@ -1,0 +1,209 @@
+
+# Docker Compose para SSD Externo - Rocket Pool Node
+# Este arquivo usa variáveis de ambiente do arquivo .env.ssd
+# Mantenha o docker-compose.yml original intacto
+
+services:
+  execution-client:
+    image: ethereum/client-go:stable
+    container_name: execution-client
+    restart: unless-stopped
+    ports:
+      - "30303:30303/tcp"  # P2P
+      - "30303:30303/udp"  # P2P
+      - "8545:8545"        # HTTP RPC
+      - "8551:8551"        # Auth RPC
+      - "6060:6060"        # Metrics
+    volumes:
+      - ${EXECUTION_DATA_PATH:-./execution-data}:/root/.ethereum
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command: >
+      --mainnet
+      --http
+      --http.addr=0.0.0.0
+      --http.port=8545
+      --http.api=eth,net,web3,engine,admin
+      --http.corsdomain="*"
+      --http.vhosts="*"
+      --authrpc.addr=0.0.0.0
+      --authrpc.port=8551
+      --authrpc.vhosts="*"
+      --authrpc.jwtsecret=/root/.ethereum/geth/jwtsecret
+      --syncmode=snap
+      --metrics
+      --metrics.addr=0.0.0.0
+      --metrics.port=6060
+      --maxpeers=50
+      --ipcdisable
+    networks:
+      - ethereum-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  consensus-client:
+    image: sigp/lighthouse:latest
+    container_name: consensus-client
+    restart: unless-stopped
+    ports:
+      - "9000:9000/tcp"    # P2P
+      - "9000:9000/udp"    # P2P
+      - "5054:5054"        # Metrics
+    volumes:
+      - ${CONSENSUS_DATA_PATH:-./consensus-data}:/root/.lighthouse
+      - ${EXECUTION_DATA_PATH:-./execution-data}/geth/jwtsecret:/root/jwtsecret:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command: >
+      lighthouse bn
+      --network mainnet
+      --datadir /root/.lighthouse
+      --http
+      --http-address 0.0.0.0
+      --http-port 5052
+      --metrics
+      --metrics-address 0.0.0.0
+      --metrics-port 5054
+      --execution-endpoint http://execution-client:8551
+      --execution-jwt /root/jwtsecret
+      --checkpoint-sync-url https://mainnet.checkpoint.sigp.io
+      --disable-deposit-contract-sync
+    depends_on:
+      - execution-client
+    networks:
+      - ethereum-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  rocketpool-node:
+    image: rocketpool/smartnode:v1.16.0
+    container_name: rocketpool-node
+    restart: unless-stopped
+    command: ["node"]
+    ports:
+      - "8000:8000"        # Rocket Pool API (opcional)
+    volumes:
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-data}:/.rocketpool
+      - ${EXECUTION_DATA_PATH:-./execution-data}/geth/jwtsecret:/root/jwtsecret:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - ETH1_ENDPOINT=http://execution-client:8545
+      - ETH2_ENDPOINT=http://consensus-client:5052
+      - ROCKET_POOL_VERSION=v1.15.0
+    depends_on:
+      - execution-client
+      - consensus-client
+    networks:
+      - ethereum-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ${PROMETHEUS_DATA_PATH:-./prometheus-data}:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts/node-alerts.yml:/etc/prometheus/alerts.yml:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--storage.tsdb.retention.size=10GB'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.external-url=http://localhost:9090'
+    networks:
+      - ethereum-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ${GRAFANA_DATA_PATH:-./grafana-data}:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - ethereum-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Opcional: Node Exporter para métricas do sistema
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - ethereum-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  ethereum-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Health checks e dependências avançadas
+# Nota: Os health checks ajudam a garantir que os serviços
+# só iniciem quando suas dependências estão prontas
+
+# Para debug, você pode adicionar estas verificações:
+# healthcheck:
+#   test: ["CMD", "curl", "-f", "http://localhost:8545"]
+#   interval: 30s
+#   timeout: 10s
+#   retries: 3
+#   start_period: 40s

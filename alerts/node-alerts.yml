@@ -1,0 +1,29 @@
+groups:
+  - name: Node Alerts
+    rules:
+      - alert: RocketPoolNodeDown
+        expr: up{job="rocketpool"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Rocket Pool Node is down"
+          description: "The Rocket Pool node is not responding for more than 1 minute."
+
+      - alert: EthereumExecutionClientDown
+        expr: up{job="execution-client"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Execution Client is down"
+          description: "The Ethereum execution client is not responding."
+
+      - alert: EthereumConsensusClientDown
+        expr: up{job="consensus-client"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Consensus Client is down"
+          description: "The Ethereum consensus client is not responding."

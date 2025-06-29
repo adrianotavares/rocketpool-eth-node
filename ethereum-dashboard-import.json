@@ -1,0 +1,111 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "ethereum-monitoring",
+    "title": "Ethereum Node Monitoring",
+    "tags": ["ethereum", "node", "monitoring"],
+    "timezone": "browser",
+    "schemaVersion": 30,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "type": "stat",
+        "title": "Node Status",
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "center",
+          "orientation": "horizontal",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "textMode": "name"
+        },
+        "pluginVersion": "8.0.0",
+        "targets": [
+          {
+            "expr": "up",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "options": {
+                  "0": {
+                    "text": "DOWN",
+                    "color": "red"
+                  },
+                  "1": {
+                    "text": "UP",
+                    "color": "green"
+                  }
+                },
+                "type": "value"
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "red",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "type": "graph",
+        "title": "System Metrics",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 6,
+          "y": 0
+        },
+        "targets": [
+          {
+            "expr": "up",
+            "legendFormat": "Service Status",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Status",
+            "min": 0,
+            "max": 1
+          }
+        ],
+        "xAxis": {
+          "show": true
+        },
+        "legend": {
+          "show": true
+        }
+      }
+    ]
+  }
+}

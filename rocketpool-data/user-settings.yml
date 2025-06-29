@@ -1,0 +1,9 @@
+root:
+  version: "1.16.0"
+  network: "mainnet"
+  isNative: "false"
+  executionClientMode: "external"
+  consensusClientMode: "external"
+  externalExecutionHttpUrl: "http://execution-client:8545"
+  externalExecutionWsUrl: "ws://execution-client:8546"
+  externalConsensusHttpUrl: "http://consensus-client:5052"
