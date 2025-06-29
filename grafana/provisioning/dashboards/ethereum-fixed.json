@@ -163,9 +163,24 @@
       "title": "Peer Connections",
       "targets": [
         {
-          "expr": "beacon_peer_count",
+          "expr": "libp2p_peers{job=\"consensus-client\"}",
           "refId": "A",
-          "legendFormat": "Consensus Peers"
+          "legendFormat": "Consensus Peers (Total)"
+        },
+        {
+          "expr": "p2p_peers{job=\"execution-client\"}",
+          "refId": "B",
+          "legendFormat": "Execution Peers (Total)"
+        },
+        {
+          "expr": "p2p_peers_inbound{job=\"execution-client\"}",
+          "refId": "C",
+          "legendFormat": "Execution Peers (Inbound)"
+        },
+        {
+          "expr": "p2p_peers_outbound{job=\"execution-client\"}",
+          "refId": "D",
+          "legendFormat": "Execution Peers (Outbound)"
         }
       ],
       "gridPos": {
