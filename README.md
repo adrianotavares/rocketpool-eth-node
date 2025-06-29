@@ -7,17 +7,26 @@ Este projeto configura um nó Ethereum completo com Rocket Pool, incluindo clien
 ```text
 rocketpool-eth-node/
 ├── alerts/
-│   └── node-alerts.yml              # Alertas do Prometheus
-├── consensus-data/                  # Dados do Lighthouse (local)
-├── execution-data/                  # Dados do Geth (local)
+│   └── node-alerts.yml          # Alertas do Prometheus
+├── consensus-data/              # Dados do Lighthouse
+├── execution-data/              # Dados do Geth (inclui JWT secret)
 ├── grafana/
+│   ├── dashboards/
+│   │   ├── rocketpool-node.json # Dashboard Rocket Pool
+│   │   └── ethereum-node.json   # Dashboard Ethereum
 │   └── provisioning/
-│       ├── dashboards/
-│       │   ├── ethereum-fixed.json      # Dashboard Ethereum Node v2
-│       │   └── dashboards.yml           # Configuração dos dashboards
-│       └── datasources/
-│           └── prometheus.yml           # Datasource Prometheus 
-├── prometheus.yml                   # Configuração do Prometheus
+│       └── dashboards/
+│           └── dashboards.yml   # Configuração dos dashboards
+├── rocketpool-data/             # Dados do Rocket Pool
+├── docker-compose.yml           # Configuração original
+├── docker-compose.ssd.yml       # Configuração para SSD externo
+├── .env.ssd                     # Variáveis de ambiente SSD
+├── setup-ssd.sh                 # Script de configuração SSD
+├── monitor-ssd.sh               # Script de monitoramento SSD
+├── SSD-CONFIG.md                # Documentação SSD detalhada
+├── QUICK-START-SSD.md           # Guia rápido SSD
+├── ethereum-dashboard-import.json 
+├── prometheus.yml               # Configuração do Prometheus
 └── README.md
 ```
 

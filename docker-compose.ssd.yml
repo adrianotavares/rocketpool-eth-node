@@ -129,31 +129,6 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
       - '--web.external-url=http://localhost:9090'
-      - '--alertmanager.notification-queue-capacity=10000'
-    networks:
-      - ethereum-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  alertmanager:
-    image: prom/alertmanager:latest
-    container_name: alertmanager
-    restart: unless-stopped
-    ports:
-      - "9093:9093"
-    volumes:
-      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
-      - ${PROMETHEUS_DATA_PATH:-./prometheus-data}/alertmanager:/alertmanager
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-    command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
-      - '--web.external-url=http://localhost:9093'
-      - '--log.level=info'
     networks:
       - ethereum-network
     logging:
@@ -170,6 +145,7 @@ services:
       - "3000:3000"
     volumes:
       - ${GRAFANA_DATA_PATH:-./grafana-data}:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
