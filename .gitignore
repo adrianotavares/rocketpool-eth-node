@@ -1,0 +1,131 @@
+# Ethereum Node Data
+execution-data/
+consensus-data/
+rocketpool-data/
+prometheus-data/
+grafana-data/
+
+# External SSD Mount Data
+/Volumes/KINGSTON/ethereum-data/
+
+# Docker Volumes
+docker-volumes/
+
+# Environment Files
+.env
+.env.local
+.env.production
+.env.staging
+.env.ssd
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Keystore Files (CRITICAL - Never commit private keys)
+keystore/
+*.keystore
+*.json.backup
+wallet.dat
+priv_validator_key.json
+
+# JWT Secrets
+jwtsecret
+jwt.hex
+
+# Database Files
+*.db
+*.ldb
+chaindata/
+beacondata/
+*.sqlite
+
+# Backup Files
+*.backup
+*.bak
+backup-*
+backups/
+
+# Temporary Files
+*.tmp
+temp/
+.tmp/
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node.js (if using any JS tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if using any Python scripts)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Docker
+.dockerignore
+
+# Monitoring Data
+prometheus-data/
+grafana-data/storage/
+
+# Lock Files
+*.lock
+LOCK
+
+# Geth Specific
+geth/chaindata/
+geth/lightchaindata/
+geth/nodes/
+geth/nodekey
+geth/LOCK
+
+# Lighthouse Specific
+beacon/
+validator_db/
+network/
+validators/
+
+# Rocket Pool Specific
+.rocketpool/
+rocketpool/data/
+rp-*
+
+# Certificates
+*.crt
+*.key
+*.pem
+*.p12
+
+# Archives
+*.tar
+*.tar.gz
+*.zip
+*.rar
+
+# Large Files (use Git LFS if needed)
+*.bin
+*.dat
+*.raw
