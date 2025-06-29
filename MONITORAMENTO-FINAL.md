@@ -34,9 +34,9 @@ O datasource Prometheus foi configurado automaticamente em:
 - URL: <http://prometheus:9090>
 - Nome: Prometheus (default)
 
-### 3. Dashboard Importado
+### 3. Dashboard Disponível
 
-O dashboard `ethereum-dashboard-import.json` foi automaticamente carregado e está disponível.
+O dashboard `ethereum-fixed.json` foi automaticamente carregado como "Ethereum Node Monitoring v2" e está disponível no Grafana.
 
 ## Métricas Disponíveis
 

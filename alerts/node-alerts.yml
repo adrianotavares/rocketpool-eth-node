@@ -1,29 +1,83 @@
 groups:
   - name: Node Alerts
     rules:
-      - alert: RocketPoolNodeDown
-        expr: up{job="rocketpool"} == 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Rocket Pool Node is down"
-          description: "The Rocket Pool node is not responding for more than 1 minute."
-
       - alert: EthereumExecutionClientDown
         expr: up{job="execution-client"} == 0
         for: 1m
         labels:
-          severity: warning
+          severity: critical
         annotations:
           summary: "Execution Client is down"
-          description: "The Ethereum execution client is not responding."
+          description: "The Ethereum execution client (Geth) is not responding for more than 1 minute."
 
       - alert: EthereumConsensusClientDown
         expr: up{job="consensus-client"} == 0
         for: 1m
         labels:
-          severity: warning
+          severity: critical
         annotations:
           summary: "Consensus Client is down"
-          description: "The Ethereum consensus client is not responding."
+          description: "The Ethereum consensus client (Lighthouse) is not responding for more than 1 minute."
+
+      - alert: NodeExporterDown
+        expr: up{job="node-exporter"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node Exporter is down"
+          description: "Node Exporter has been down for more than 2 minutes. System metrics are not available."
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 90% for more than 5 minutes on {{ $labels.instance }}."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% for more than 5 minutes on {{ $labels.instance }}."
+
+      - alert: HighDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 90
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High disk usage detected"
+          description: "Disk usage is above 90% for more than 10 minutes on {{ $labels.instance }} at {{ $labels.mountpoint }}."
+
+      - alert: ConsensusClientSyncLag
+        expr: increase(beacon_head_slot[5m]) < 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Consensus client sync lag detected"
+          description: "Lighthouse consensus client appears to be lagging behind. Head slot has not increased in the last 10 minutes."
+
+      - alert: LowPeerCount
+        expr: beacon_peer_count < 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low peer count"
+          description: "Lighthouse has fewer than 5 peers connected for more than 5 minutes. Current peer count: {{ $value }}."
+
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus is down"
+          description: "Prometheus monitoring system is not responding."

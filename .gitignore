@@ -1,9 +1,9 @@
-# Ethereum Node Data
-execution-data/
-consensus-data/
-rocketpool-data/
-prometheus-data/
-grafana-data/
+# Ethereum Node Data - Ignore all contents recursively
+execution-data/**
+consensus-data/**
+rocketpool-data/**
+prometheus-data/**
+grafana-data/**
 
 # External SSD Mount Data
 /Volumes/KINGSTON/ethereum-data/
@@ -85,11 +85,8 @@ venv/
 .venv/
 
 # Docker
+# Docker
 .dockerignore
-
-# Monitoring Data
-prometheus-data/
-grafana-data/storage/
 
 # Lock Files
 *.lock

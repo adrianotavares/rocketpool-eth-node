@@ -11,23 +11,12 @@ rocketpool-eth-node/
 ├── consensus-data/                  # Dados do Lighthouse (local)
 ├── execution-data/                  # Dados do Geth (local)
 ├── grafana/
-│   ├── dashboards/
-│   │   ├── rocketpool-node.json     # Dashboard Rocket Pool
-│   │   └── ethereum-node.json       # Dashboard Ethereum
 │   └── provisioning/
-│       └── dashboards/
-│           └── dashboards.yml       # Configuração dos dashboards
-├── rocketpool-data/
-│   └── user-settings.template.yml   # Template de configuração Rocket Pool
-├── docker-compose.yml               # Configuração original
-├── docker-compose.ssd.yml           # Configuração para SSD externo
-├── .env.ssd                         # Variáveis de ambiente SSD
-├── setup-ssd.sh                     # Script de configuração SSD
-├── monitor-ssd.sh                   # Script de monitoramento SSD
-├── SSD-CONFIG.md                    # Documentação SSD detalhada
-├── QUICK-START-SSD.md               # Guia rápido SSD
-├── CONFIGURACAO-ROCKET-POOL.md      # Documentação configuração Rocket Pool
-├── ethereum-dashboard-import.json 
+│       ├── dashboards/
+│       │   ├── ethereum-fixed.json      # Dashboard Ethereum Node v2
+│       │   └── dashboards.yml           # Configuração dos dashboards
+│       └── datasources/
+│           └── prometheus.yml           # Datasource Prometheus 
 ├── prometheus.yml                   # Configuração do Prometheus
 └── README.md
 ```
