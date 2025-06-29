@@ -6,7 +6,7 @@
 **SSD**: KINGSTON 1TB (/Volumes/KINGSTON)  
 **Espaço Disponível**: 719GB (75% livre)
 
-## INFRAESTRUTURA CORE - FUNCIONANDO ✅
+## INFRAESTRUTURA CORE - FUNCIONANDO
 
 ### Infraestrutura Core Ethereum
 
