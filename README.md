@@ -410,60 +410,6 @@ docker-compose restart prometheus grafana
 cat rocketpool-data/.rocketpool/user-settings.yml
 docker logs rocketpool-node
 ```
-### Troubleshooting e FAQ
-
-#### Common Issues
-
-- **[EthStaker Documentation](https://docs.ethstaker.cc/)**
-  - Problemas mais comuns
-  - Soluções step-by-step
-  - Dicas de performance
-
-- **[Rocket Pool Troubleshooting](https://docs.rocketpool.net/guides/node/faq)**
-  - FAQ oficial do Rocket Pool
-  - Problemas específicos do protocolo
-  - Soluções da comunidade
-
-### Vídeo Tutoriais
-
-#### Tutoriais em Português
-
-- **[Node Ethereum - Setup Completo](https://www.youtube.com/results?search_query=ethereum+node+setup+português)**
-  - Busque por "ethereum node setup português" no YouTube
-  - Tutoriais de configuração completa de nodes
-
-- **[Rocket Pool Brasil](https://www.youtube.com/results?search_query=rocket+pool+tutorial+português)**
-  - Busque por "rocket pool tutorial português"
-  - Comunidade brasileira de staking
-
-#### Tutoriais em Inglês
-
-- **[CoinCashew Ethereum Guides](https://www.youtube.com/results?search_query=coincashew+ethereum+staking)**
-  - Tutoriais detalhados de setup de nodes
-  - Configuração de hardware e software
-
-- **[EthStaker Community](https://www.youtube.com/results?search_query=ethstaker+node+setup)**
-  - Webinars sobre staking
-  - Discussões técnicas avançadas
-
-#### Tópicos Específicos Recomendados
-
-1. **"Ethereum Node Docker Setup 2024"** - Configuração com containers
-2. **"Rocket Pool Complete Guide"** - Setup passo a passo
-3. **"Grafana Dashboard Ethereum"** - Monitoramento avançado
-4. **"Docker Compose Blockchain"** - Orquestração de serviços
-
-### Apps e Ferramentas Mobile
-
-- **[Rocket Pool Website](https://rocketpool.net/)**
-  - Informações oficiais do protocolo
-  - Documentação e recursos
-  - Links para dashboards
-
-- **[Beaconcha.in Explorer](https://beaconcha.in/)**
-  - Monitor de validadores via web
-  - Estatísticas da rede Ethereum
-  - Notificações de performance (via site)
 
 ## Contribuição
 
