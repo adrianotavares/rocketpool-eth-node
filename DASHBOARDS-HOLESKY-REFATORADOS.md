@@ -105,6 +105,42 @@ Os dashboards foram testados e validados:
 
 ---
 
+## 📁 Nova Estrutura Organizada
+
+### 🎯 Organização por Pastas
+
+Os dashboards foram reorganizados em pastas separadas para melhor organização:
+
+```
+grafana/provisioning/dashboards/
+├── default.yml (foldersFromFilesStructure: true)
+├── Ethereum/ (dashboards da mainnet)
+│   ├── ethereum.json
+│   └── geth.json
+└── Holesky/ (dashboards da testnet)
+    ├── geth-holesky.json
+    └── lighthouse-holesky.json
+```
+
+### 📂 Resultado no Grafana
+
+**Pasta "Ethereum" (Mainnet):**
+- Ethereum Node Monitoring
+- Geth Server Monitoring
+
+**Pasta "Holesky" (Testnet):**
+- Geth Holesky Testnet Monitoring  
+- Lighthouse Holesky Testnet Monitoring
+
+### ✅ Vantagens
+
+- ✅ Separação clara entre mainnet e testnet
+- ✅ Navegação intuitiva no Grafana
+- ✅ Organização escalável para futuras redes
+- ✅ Manutenção simplificada dos dashboards
+
+---
+
 **Status**: **COMPLETO**  
 **Data**: 2025-07-01  
 **Versão**: 1.0
