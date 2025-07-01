@@ -21,14 +21,21 @@ rocketpool-eth-node/
 ├── rocketpool-data/             # Dados do Rocket Pool
 ├── docker-compose.yml           # Configuração original
 ├── docker-compose.ssd.yml       # Configuração para SSD externo
+├── docker-compose-holesky.yml   # Configuração para testnet Holesky
 ├── .env.ssd                     # Variáveis de ambiente SSD
+├── .env.holesky                 # Variáveis de ambiente testnet Holesky
 ├── setup-ssd.sh                 # Script de configuração SSD
+├── setup-holesky.sh             # Script de configuração testnet Holesky
 ├── monitor-ssd.sh               # Script de monitoramento SSD
+├── monitor-holesky.sh           # Script de monitoramento testnet Holesky
 ├── SSD-CONFIG.md                # Documentação SSD detalhada
 ├── QUICK-START-SSD.md           # Guia rápido SSD
 ├── STATUS-FINAL-SSD.md          # Status final da configuração SSD
+├── TESTNET-HOLESKY-CONFIG.md    # Guia completo para configuração testnet
 ├── DASHBOARD-GETH-CORRIGIDO.md  # Documentação dashboard Geth
-├── prometheus.yml               # Configuração do Prometheus
+├── user-settings-holesky-example.yml # Exemplo user-settings para testnet
+├── prometheus.yml               # Configuração do Prometheus (mainnet)
+├── prometheus-holesky.yml       # Configuração do Prometheus (testnet)
 └── README.md
 ```
 
@@ -45,6 +52,14 @@ rocketpool-eth-node/
 - Use: `./setup-ssd.sh` seguido de `docker-compose -f docker-compose.ssd.yml --env-file .env.ssd up -d`
 - **Vantagens**: Mais espaço, melhor performance, portabilidade
 - **Documentação**: Veja [SSD-CONFIG.md](SSD-CONFIG.md) e [QUICK-START-SSD.md](QUICK-START-SSD.md)
+
+### Configuração Testnet (Para Aprendizado)
+
+- Configuração na testnet Holesky para aprender sem riscos
+- ETH gratuito via faucets, sincronização rápida (~2 horas)
+- **Inicialização rápida**: `./setup-holesky.sh`
+- **Monitoramento**: `./monitor-holesky.sh`
+- **Documentação**: Veja [TESTNET-HOLESKY-CONFIG.md](TESTNET-HOLESKY-CONFIG.md)
 
 ## Pré-requisitos
 

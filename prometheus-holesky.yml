@@ -1,0 +1,114 @@
+# Configuração do Prometheus para Testnet Holesky
+# Este arquivo configura o Prometheus para coletar métricas específicas da testnet
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    network: 'holesky'
+    environment: 'testnet'
+
+# Configuração de alertas
+rule_files:
+  - "alerts.yml"
+
+# Configuração do Alertmanager (opcional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager-holesky:9093
+
+# Configuração de coleta de métricas
+scrape_configs:
+  # Prometheus - monitoramento próprio
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Geth - Cliente de Execução Holesky
+  - job_name: 'geth-holesky'
+    static_configs:
+      - targets: ['execution-client-holesky:6060']
+        labels:
+          client: 'geth'
+          network: 'holesky'
+          client_type: 'execution'
+    scrape_interval: 15s
+    metrics_path: /debug/metrics/prometheus
+    scrape_timeout: 10s
+
+  # Lighthouse - Cliente de Consenso Holesky
+  - job_name: 'lighthouse-holesky'
+    static_configs:
+      - targets: ['consensus-client-holesky:5054']
+        labels:
+          client: 'lighthouse'
+          network: 'holesky'
+          client_type: 'consensus'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  # Node Exporter - Métricas do Sistema
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter-holesky:9100']
+        labels:
+          service: 'system'
+          network: 'holesky'
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Grafana - Métricas do Grafana
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana-holesky:3000']
+        labels:
+          service: 'grafana'
+          network: 'holesky'
+    scrape_interval: 60s
+    metrics_path: /metrics
+
+  # Docker - Métricas dos containers (se habilitado)
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['host.docker.internal:9323']
+        labels:
+          service: 'docker'
+          network: 'holesky'
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+# Configurações específicas para testnet
+# - Intervalo de scrape reduzido para melhor visibilidade
+# - Timeout menor devido a recursos limitados
+# - Labels específicos para identificar ambiente de testnet
+# - Alertmanager opcional para desenvolvimento
+
+# Métricas importantes para monitorar na Holesky:
+# 
+# Geth (Execution Client):
+# - eth_chain_head_number: Número do bloco atual
+# - eth_chain_head_age: Idade do último bloco
+# - p2p_peers: Número de peers conectados
+# - eth_syncing: Status de sincronização
+# - system_cpu_percent: Uso de CPU
+# - system_memory_used: Uso de memória
+#
+# Lighthouse (Consensus Client):
+# - beacon_head_slot: Slot atual do beacon chain
+# - beacon_finalized_epoch: Última época finalizada
+# - beacon_head_root: Root do bloco head
+# - sync_eth2_synced: Status de sincronização
+# - validator_total: Total de validadores
+# - slashings_total: Total de slashings
+#
+# Sistema:
+# - node_filesystem_free_bytes: Espaço livre em disco
+# - node_memory_MemAvailable_bytes: Memória disponível
+# - node_cpu_seconds_total: Uso de CPU
+# - node_network_receive_bytes_total: Bytes recebidos
+# - node_network_transmit_bytes_total: Bytes transmitidos
