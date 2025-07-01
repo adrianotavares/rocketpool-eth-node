@@ -22,9 +22,9 @@
 
 #### Monitoramento e Dashboards
 
-- **[Grafana Dashboard - Geth](https://grafana.com/grafana/dashboards/6976)**
+- **[Grafana Dashboard - Geth Original](https://grafana.com/grafana/dashboards/6976)**
   - Dashboard oficial para monitoramento do Geth
-  - Métricas de performance e sincronização
+  - **Nota**: Este projeto inclui dashboards customizados pré-configurados
 
 - **[Grafana Dashboard - Lighthouse](https://grafana.com/grafana/dashboards/13759)**
   - Dashboard para cliente de consenso Lighthouse

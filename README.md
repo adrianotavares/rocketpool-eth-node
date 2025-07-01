@@ -11,12 +11,13 @@ rocketpool-eth-node/
 ├── consensus-data/              # Dados do Lighthouse
 ├── execution-data/              # Dados do Geth (inclui JWT secret)
 ├── grafana/
-│   ├── dashboards/
-│   │   ├── rocketpool-node.json # Dashboard Rocket Pool
-│   │   └── ethereum-node.json   # Dashboard Ethereum
 │   └── provisioning/
-│       └── dashboards/
-│           └── dashboards.yml   # Configuração dos dashboards
+│       ├── dashboards/
+│       │   ├── default.yml      # Configuração dos dashboards
+│       │   ├── ethereum.json    # Dashboard principal Ethereum
+│       │   └── geth.json        # Dashboard específico Geth
+│       └── datasources/
+│           └── prometheus.yml   # Configuração datasource Prometheus
 ├── rocketpool-data/             # Dados do Rocket Pool
 ├── docker-compose.yml           # Configuração original
 ├── docker-compose.ssd.yml       # Configuração para SSD externo
@@ -25,7 +26,8 @@ rocketpool-eth-node/
 ├── monitor-ssd.sh               # Script de monitoramento SSD
 ├── SSD-CONFIG.md                # Documentação SSD detalhada
 ├── QUICK-START-SSD.md           # Guia rápido SSD
-├── ethereum-dashboard-import.json 
+├── STATUS-FINAL-SSD.md          # Status final da configuração SSD
+├── DASHBOARD-GETH-CORRIGIDO.md  # Documentação dashboard Geth
 ├── prometheus.yml               # Configuração do Prometheus
 └── README.md
 ```
@@ -104,7 +106,10 @@ docker-compose up -d
 - **Grafana**: <http://localhost:3000>
   - Usuário: `admin`
   - Senha: `admin`
-  - Dashboards pré-configurados para Ethereum e Rocket Pool
+  - **Dashboards disponíveis na pasta "Ethereum"**:
+    - `Ethereum` - Dashboard principal com métricas gerais (Geth + Lighthouse)
+    - `Geth` - Dashboard específico do cliente de execução
+  - Data source Prometheus configurado automaticamente
 
 - **Prometheus**: <http://localhost:9090>
   - Interface para consultar métricas e verificar alertas
@@ -294,20 +299,17 @@ docker logs --tail=20 consensus-client
    - Usuário: `admin`
    - Senha: `admin`
 
-2. **Adicionar Prometheus como Data Source**:
-   - Vá em Configuration > Data Sources
-   - Clique em "Add data source"
-   - Selecione "Prometheus"
-   - URL: `http://prometheus:9090`
-   - Clique em "Save & Test"
+2. **Dashboards Pré-configurados**:
+   - Os dashboards já são automaticamente provisionados durante a inicialização
+   - Disponíveis na pasta "Ethereum":
+     - **Ethereum**: Dashboard principal com métricas gerais dos clientes
+     - **Geth**: Dashboard específico do cliente de execução
+   - Data source Prometheus configurado automaticamente
 
-3. **Importar Dashboards**:
-   - Vá em "+" > Import
-   - Upload dos arquivos JSON da pasta `grafana/dashboards/`
-   - Ou usar IDs dos dashboards da comunidade:
-     - **Geth Dashboard**: ID `6976`
-     - **Lighthouse Dashboard**: ID `13759`
-     - **Node Exporter**: ID `1860`
+3. **Localização dos Arquivos**:
+   - Dashboards: `grafana/provisioning/dashboards/`
+   - Configuração: `grafana/provisioning/dashboards/default.yml`
+   - Data sources: `grafana/provisioning/datasources/prometheus.yml`
 
 ### Passo 5: Monitoramento de Métricas
 
@@ -411,6 +413,43 @@ cat rocketpool-data/.rocketpool/user-settings.yml
 docker logs rocketpool-node
 ```
 
+## Dashboards do Grafana
+
+### Dashboards Disponíveis
+
+O projeto inclui dashboards pré-configurados que são automaticamente provisionados:
+
+1. **Dashboard Ethereum** (`ethereum.json`):
+   - Visão geral dos clientes de execução e consenso
+   - Métricas de rede, peers, sincronização
+   - Status geral do nó Ethereum
+
+2. **Dashboard Geth** (`geth.json`):
+   - Métricas específicas do cliente de execução
+   - Performance, memória, CPU
+   - Estatísticas de blocos e transações
+
+### Estrutura dos Dashboards
+
+```text
+grafana/provisioning/
+├── dashboards/
+│   ├── default.yml      # Configuração de provisionamento
+│   ├── ethereum.json    # Dashboard principal
+│   └── geth.json        # Dashboard Geth
+└── datasources/
+    └── prometheus.yml   # Data source Prometheus
+```
+
+### Características
+
+- **Provisionamento Automático**: Dashboards são carregados automaticamente na inicialização
+- **Pasta "Ethereum"**: Todos os dashboards ficam organizados na pasta "Ethereum" no Grafana
+- **Data Source**: Prometheus configurado automaticamente como data source
+- **Métricas Reais**: Dashboards usam apenas métricas disponíveis nos clientes
+
+Para detalhes técnicos sobre o dashboard Geth, consulte `DASHBOARD-GETH-CORRIGIDO.md`.
+
 ## Contribuição
 
 Contribuições são bem-vindas! Por favor:
@@ -436,7 +475,8 @@ A configuração do Rocket Pool Ethereum Node no SSD externo Kingston 1TB foi **
 
 - **Execution Client (Geth)**: Sincronizando com a rede Ethereum
 - **Consensus Client (Lighthouse)**: Conectado e funcionando  
-- **Monitoramento**: Prometheus + Grafana operacionais
+- **Monitoramento**: Prometheus + Grafana operacionais com dashboards configurados
+- **Dashboards**: Ethereum e Geth disponíveis na pasta "Ethereum"
 - **Armazenamento**: Todos os dados gravados no SSD (~500MB utilizados de 1TB)
 - **Scripts**: Setup e monitoramento funcionais
 

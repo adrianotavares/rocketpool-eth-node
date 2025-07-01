@@ -1,7 +1,7 @@
 # Ethereum Node Data - Ignore all contents recursively
 execution-data/**
 consensus-data/**
-rocketpool-data/**
+# rocketpool-data/**
 prometheus-data/**
 grafana-data/**
 
