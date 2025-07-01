@@ -1,9 +1,5 @@
 # Sistema de Alertas Configurado - Rocket Pool Node
 
-## Status: FUNCIONANDO
-
-O sistema de alertas foi configurado com sucesso e está ativo.
-
 ## Componentes Configurados
 
 ### 1. Prometheus
@@ -24,14 +20,12 @@ O sistema de alertas foi configurado com sucesso e está ativo.
 
 ## Dashboards
 
-**Dashboard Ativo**: Ethereum Node Monitoring v2
+**Dashboard Ativo**: Ethereum Node Monitoring
 
 - **Status**: Funcionando corretamente
 - **UID**: ethereum-monitoring-v2
-- **Provisionamento**: Automatizado via arquivo ethernet-fixed.json
+- **Provisionamento**: Automatizado via arquivos ethereum.json e geth.json
 - **Métricas**: Execution client, Consensus client, Node Exporter
-
-**Observação**: Dashboard duplicado removido com sucesso.
 
 ## Alertas Configurados
 

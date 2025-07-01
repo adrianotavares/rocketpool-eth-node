@@ -39,15 +39,15 @@ O Rocket Pool está configurado para usar clientes externos:
 
 ```text
 /Volumes/KINGSTON/ethereum-data/
-├── execution-data/          # Dados do Geth
-├── consensus-data/          # Dados do Lighthouse  
-├── rocketpool-data/         # Dados do Rocket Pool
-│   └── user-settings.yml    # Configuração ativa
-├── prometheus-data/         # Dados do Prometheus
-└── grafana-data/           # Dados do Grafana
-
-./rocketpool-data/
-└── user-settings.template.yml  # Template de referência
+├── execution-data/                 # Dados do Geth
+├── consensus-data/                 # Dados do Lighthouse  
+├── rocketpool-data/                # Dados do Rocket Pool
+│   ├── user-settings.yml           # Configuração ativa
+│   └── user-settings.template.yml  # Template de referência
+│   └── .rocketpool-data/
+│       └── user-settings.yml 
+├── prometheus-data/                # Dados do Prometheus
+└── grafana-data/                   # Dados do Grafana
 ```
 
 ## Comandos Úteis
