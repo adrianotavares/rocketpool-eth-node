@@ -4,6 +4,7 @@ consensus-data/**
 # rocketpool-data/**
 prometheus-data/**
 grafana-data/**
+remote-access/**
 
 # External SSD Mount Data
 /Volumes/KINGSTON/ethereum-data/
@@ -105,16 +106,16 @@ validator_db/
 network/
 validators/
 
-# Rocket Pool Specific
-.rocketpool/
-rocketpool/data/
-rp-*
-
 # Certificates
 *.crt
 *.key
 *.pem
 *.p12
+
+# Remote Access Configuration (Security Sensitive)
+*remote-access*
+setup-*-remote.*
+test-*-remote.*
 
 # Archives
 *.tar
