@@ -3,7 +3,9 @@ execution-data/**
 consensus-data/**
 # rocketpool-data/**
 prometheus-data/**
+prometheus-data-holesky/**
 grafana-data/**
+grafana-data-holesky/**
 remote-access/**
 
 # External SSD Mount Data
