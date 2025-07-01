@@ -281,7 +281,8 @@ check_rocketpool_status() {
         fi
         
         # Verificar status do node (com timeout manual)
-        docker exec rocketpool-node-holesky rocketpool api node status > /tmp/rp_status_holesky 2>/dev/null &
+
+        docker exec rocketpool-node-holesky rocketpool api node status > /tmp/rp_status_holesky 2> /dev/null &
         EXEC_PID=$!
         sleep 10
         if kill -0 $EXEC_PID 2>/dev/null; then
@@ -398,22 +399,22 @@ watch_mode() {
 
 main() {
     case "${1:-}" in
-        "watch")
+        "watch"|"-w")
             watch_mode
             ;;
-        "space")
+        "space"|"-sp")
             print_header
             check_data_directories
             ;;
-        "containers")
+        "containers"|"-c")
             print_header
             check_docker_containers
             ;;
-        "sync")
+        "sync"|"-s")
             print_header
             check_sync_status
             ;;
-        "rocketpool"|"rp")
+        "rocketpool"|"-rp")
             print_header
             check_rocketpool_status
             ;;
@@ -421,13 +422,13 @@ main() {
             echo "Uso: $0 [opção]"
             echo
             echo "Opções:"
-            echo "  (nenhuma)  Executar verificação completa uma vez"
-            echo "  watch      Monitoramento contínuo (atualiza a cada 30s)"
-            echo "  space      Verificar apenas diretórios de dados"
-            echo "  containers Verificar apenas status dos containers"
-            echo "  sync       Verificar apenas status de sincronização"
-            echo "  rocketpool Verificar apenas status do Rocket Pool"
-            echo "  help       Mostrar esta ajuda"
+            echo "  (nenhuma)      Executar verificação completa uma vez"
+            echo "  watch      -w  Monitoramento contínuo (atualiza a cada 30s)"
+            echo "  space      -sp Verificar apenas diretórios de dados"
+            echo "  containers -c  Verificar apenas status dos containers"
+            echo "  sync       -s  Verificar apenas status de sincronização"
+            echo "  rocketpool -rp Verificar apenas status do Rocket Pool"
+            echo "  help       -h --help Mostrar esta ajuda"
             echo
             echo "Exemplos:"
             echo "  $0                 # Verificação completa"
