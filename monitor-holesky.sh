@@ -264,6 +264,78 @@ check_network_connectivity() {
     echo
 }
 
+check_rocketpool_status() {
+    echo -e "${CYAN}STATUS DO ROCKET POOL${NC}"
+    echo "========================"
+    
+    # Verificar se o container está rodando
+    if docker ps --format "{{.Names}}" | grep -q "rocketpool-node-holesky"; then
+        log_success "Container Rocket Pool: Executando"
+        
+        # Verificar se o comando rocketpool funciona
+        if docker exec rocketpool-node-holesky rocketpool --version > /dev/null 2>&1; then
+            VERSION=$(docker exec rocketpool-node-holesky rocketpool --version 2>/dev/null | head -1)
+            log_success "Rocket Pool CLI: Funcionando ($VERSION)"
+        else
+            log_warning "Rocket Pool CLI: Não está respondendo"
+        fi
+        
+        # Verificar status do node (com timeout manual)
+        docker exec rocketpool-node-holesky rocketpool api node status > /tmp/rp_status_holesky 2>/dev/null &
+        EXEC_PID=$!
+        sleep 10
+        if kill -0 $EXEC_PID 2>/dev/null; then
+            kill $EXEC_PID 2>/dev/null
+            log_warning "Rocket Pool: Timeout ao verificar status do node"
+        elif [ -f /tmp/rp_status_holesky ]; then
+            # Verificar se a resposta é JSON válida e interpretar
+            if jq -e . /tmp/rp_status_holesky > /dev/null 2>&1; then
+                STATUS=$(jq -r '.status' /tmp/rp_status_holesky 2>/dev/null)
+                if [ "$STATUS" = "success" ]; then
+                    # Verificar wallet
+                    WALLET_INIT=$(jq -r '.walletInitialized' /tmp/rp_status_holesky 2>/dev/null)
+                    NODE_REGISTERED=$(jq -r '.registered' /tmp/rp_status_holesky 2>/dev/null)
+                    
+                    if [ "$WALLET_INIT" = "false" ]; then
+                        log_warning "Rocket Pool: Wallet não inicializada"
+                        echo "  Use: docker exec -it rocketpool-node-holesky rocketpool api wallet init"
+                    elif [ "$NODE_REGISTERED" = "true" ]; then
+                        log_success "Rocket Pool: Node registrado"
+                    else
+                        log_info "Rocket Pool: Node status obtido com sucesso"
+                    fi
+                else
+                    ERROR_MSG=$(jq -r '.error' /tmp/rp_status_holesky 2>/dev/null)
+                    log_warning "Rocket Pool: $ERROR_MSG"
+                fi
+            else
+                # Fallback para respostas não-JSON (versões antigas)
+                if grep -q "The node wallet has not been initialized" /tmp/rp_status_holesky; then
+                    log_warning "Rocket Pool: Wallet não inicializada"
+                    echo "  Use: docker exec -it rocketpool-node-holesky rocketpool api wallet init"
+                elif grep -q "node is registered" /tmp/rp_status_holesky; then
+                    log_success "Rocket Pool: Node registrado"
+                else
+                    log_info "Rocket Pool: Status do node disponível"
+                fi
+            fi
+            rm -f /tmp/rp_status_holesky
+        else
+            log_warning "Rocket Pool: Não foi possível verificar status do node"
+        fi
+        
+        # Verificar conectividade com execution client (simplificado)
+        log_info "Rocket Pool: Para verificar sincronização use:"
+        echo "  docker exec rocketpool-node-holesky rocketpool api node sync"
+        
+    else
+        log_error "Container Rocket Pool: Não está executando"
+        echo "  Use: docker-compose -f docker-compose-holesky.yml up -d rocketpool-node"
+    fi
+    
+    echo
+}
+
 show_useful_commands() {
     echo -e "${CYAN}COMANDOS ÚTEIS - TESTNET HOLESKY${NC}"
     echo "===================================="
@@ -277,7 +349,9 @@ show_useful_commands() {
     echo "docker logs rocketpool-node-holesky"
     echo
     echo "# Reiniciar um serviço:"
-    echo "docker-compose -f docker-compose-holesky.yml restart execution-client"
+    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart execution-client"
+    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart consensus-client"
+    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart rocketpool-node"
     echo
     echo "# Acessar Rocket Pool CLI:"
     echo "docker exec -it rocketpool-node-holesky /bin/bash"
@@ -292,11 +366,13 @@ show_useful_commands() {
     echo "# Explorer: https://holesky.etherscan.io/"
     echo "# Beaconcha.in: https://holesky.beaconcha.in/"
     echo
-    echo "# Comandos Rocket Pool básicos:"
-    echo "rocketpool wallet init"
-    echo "rocketpool wallet status"
-    echo "rocketpool node status"
-    echo "rocketpool node register"
+    echo "# Comandos Rocket Pool básicos (dentro do container):"
+    echo "docker exec -it rocketpool-node-holesky rocketpool api wallet init"
+    echo "docker exec -it rocketpool-node-holesky rocketpool api wallet status"
+    echo "docker exec -it rocketpool-node-holesky rocketpool api node status"
+    echo "docker exec -it rocketpool-node-holesky rocketpool api node register"
+    echo "docker exec -it rocketpool-node-holesky rocketpool api node sync"
+    echo "docker exec -it rocketpool-node-holesky rocketpool api minipool status"
     echo
 }
 
@@ -307,6 +383,7 @@ watch_mode() {
         check_data_directories
         check_docker_containers
         check_sync_status
+        check_rocketpool_status
         check_system_resources
         check_network_connectivity
         
@@ -336,6 +413,10 @@ main() {
             print_header
             check_sync_status
             ;;
+        "rocketpool"|"rp")
+            print_header
+            check_rocketpool_status
+            ;;
         "help"|"-h"|"--help")
             echo "Uso: $0 [opção]"
             echo
@@ -345,18 +426,21 @@ main() {
             echo "  space      Verificar apenas diretórios de dados"
             echo "  containers Verificar apenas status dos containers"
             echo "  sync       Verificar apenas status de sincronização"
+            echo "  rocketpool Verificar apenas status do Rocket Pool"
             echo "  help       Mostrar esta ajuda"
             echo
             echo "Exemplos:"
             echo "  $0                 # Verificação completa"
             echo "  $0 watch           # Monitoramento contínuo"
             echo "  $0 sync            # Apenas sincronização"
+            echo "  $0 rocketpool      # Apenas Rocket Pool"
             ;;
         *)
             print_header
             check_data_directories
             check_docker_containers
             check_sync_status
+            check_rocketpool_status
             check_system_resources
             check_network_connectivity
             show_useful_commands
