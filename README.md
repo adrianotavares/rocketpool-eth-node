@@ -2,6 +2,24 @@
 
 Este projeto configura um nó Ethereum completo com Rocket Pool, incluindo cliente de execução (Geth), cliente de consenso (Lighthouse) e monitoramento via Prometheus e Grafana, com autenticação JWT.
 
+## Screenshots
+
+### Docker Desktop - Containers em Execução
+
+![Docker Desktop](images/docker-desktop.jpg)
+
+### Dashboard Geth - Monitoramento de Execução
+
+![Dashboard Geth](images/geth.jpg)
+
+### Dashboard Lighthouse - Monitoramento de Consenso
+
+![Dashboard Lighthouse](images/lighthouse.jpg)
+
+### Script de Monitoramento - Status do Sistema
+
+![Monitor Script](images/monitor.jpg)
+
 ## Estrutura do Projeto
 
 ```text
@@ -58,6 +76,7 @@ rocketpool-eth-node/
 - Configuração na testnet Holesky para aprender sem riscos
 - ETH gratuito via faucets, sincronização rápida (~2 horas)
 - **Inicialização rápida**: `./setup-holesky.sh`
+- **Iniciar sistema**: `docker-compose -f docker-compose-holesky.yml --env-file .env.holesky up -d`
 - **Monitoramento**: `./monitor-holesky.sh`
 - **Documentação**: Veja [TESTNET-HOLESKY-CONFIG.md](TESTNET-HOLESKY-CONFIG.md)
 
@@ -102,13 +121,19 @@ docker-compose up -d
    docker-compose up -d
    ```
 
-4. Acompanhe os logs:
+4. Verifique o status no Docker Desktop ou via linha de comando (veja screenshot do Docker Desktop acima):
+
+   ```bash
+   docker ps
+   ```
+
+5. Acompanhe os logs:
 
    ```bash
    docker-compose logs -f
    ```
 
-5. Verifique o status dos contêineres:
+6. Verifique o status dos contêineres:
 
    ```bash
    docker ps
@@ -175,9 +200,15 @@ curl -X POST -H "Content-Type: application/json" \
 
 - **Prometheus** coleta métricas de todos os clientes automaticamente
 - **Grafana** apresenta dashboards pré-configurados para:
-  - Ethereum node (Geth e Lighthouse)
+  - Ethereum node (Geth e Lighthouse) - *veja screenshots das dashboards acima*
   - Rocket Pool específico
   - Saúde dos contêineres
+
+### Dashboards de Monitoramento
+
+- **Dashboard Geth**: Monitora sincronização, peers, performance do cliente de execução
+- **Dashboard Lighthouse**: Acompanha beacon chain, validadores, status de consenso
+- **Status do Sistema**: Script de monitoramento que mostra status geral dos containers
 
 ### Alertas Configurados
 
@@ -185,6 +216,12 @@ curl -X POST -H "Content-Type: application/json" \
 - Falha no Consensus Client  
 - Validador offline
 - Baixa performance do node
+
+### Acesso às Interfaces
+
+- **Grafana**: <http://localhost:3000> (admin/admin)
+- **Prometheus**: <http://localhost:9090>
+- **Script de Monitor**: `./monitor-holesky.sh` ou `./monitor-ssd.sh`
 
 ## Comandos Úteis
 
@@ -210,6 +247,22 @@ docker-compose restart consensus-client
 
 # Ver status dos contêineres
 docker ps
+```
+
+### Scripts de Monitoramento
+
+O projeto inclui scripts específicos para monitoramento do sistema (veja screenshot do monitor acima):
+
+```bash
+# Para testnet Holesky
+./monitor-holesky.sh           # Verificação única
+./monitor-holesky.sh watch     # Monitoramento contínuo
+./monitor-holesky.sh sync      # Apenas sincronização
+./monitor-holesky.sh containers # Apenas containers
+
+# Para configuração SSD
+./monitor-ssd.sh               # Verificação única
+./monitor-ssd.sh watch         # Monitoramento contínuo
 ```
 
 ### Verificação de Saúde
@@ -430,7 +483,7 @@ docker logs rocketpool-node
 
 ## Dashboards do Grafana
 
-### Dashboards Disponíveis
+### Dashboards Pré-configurados
 
 O projeto inclui dashboards pré-configurados que são automaticamente provisionados:
 
