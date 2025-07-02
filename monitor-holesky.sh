@@ -98,7 +98,7 @@ check_docker_containers() {
         return 1
     fi
     
-    CONTAINERS=("execution-client-holesky" "consensus-client-holesky" "rocketpool-node-holesky" "prometheus-holesky" "grafana-holesky" "node-exporter-holesky")
+    CONTAINERS=("eth1-holesky" "eth2-holesky" "rocketpool-node-holesky" "prometheus-holesky" "grafana-holesky" "node-exporter-holesky")
     
     for container in "${CONTAINERS[@]}"; do
         if docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "$container"; then
@@ -345,13 +345,13 @@ show_useful_commands() {
     echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky logs -f"
     echo
     echo "# Ver logs específicos:"
-    echo "docker logs execution-client-holesky"
-    echo "docker logs consensus-client-holesky"
+    echo "docker logs eth1-holesky"
+    echo "docker logs eth2-holesky"
     echo "docker logs rocketpool-node-holesky"
     echo
     echo "# Reiniciar um serviço:"
-    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart execution-client"
-    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart consensus-client"
+    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart eth1"
+    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart eth2"
     echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart rocketpool-node"
     echo
     echo "# Acessar Rocket Pool CLI:"
