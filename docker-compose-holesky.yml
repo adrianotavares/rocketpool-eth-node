@@ -1,41 +1,73 @@
-# Docker Compose para Testnet Holesky - Rocket Pool Node
-# Este arquivo configura o nó completo para a testnet Holesky
-# Use com: docker-compose -f docker-compose-holesky.yml --env-file .env.holesky up -d
+# Docker Compose para Testnet Holesky - Rocket Pool Node (Modo Docker Correto)
+# Configuração baseada na arquitetura oficial do Rocket Pool
+# Utiliza containers separados para cada componente
 
 services:
-  execution-client:
-    image: ethereum/client-go:stable
-    container_name: execution-client-holesky
-    restart: unless-stopped
+  # Rocket Pool Node (daemon principal)
+  rocketpool-node:
+    image: rocketpool/smartnode:latest
+    container_name: rocketpool-node-holesky
+    restart: always
+    command: ["node"]
+    ports:
+      - "8000:8000"        # API Rocket Pool
+    volumes:
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-data-holesky}:/.rocketpool
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - ROCKET_POOL_NETWORK=holesky
+    networks:
+      - holesky-network
+    depends_on:
+      - eth1
+      - eth2
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Geth (Execution Client)
+  eth1:
+    image: ethereum/client-go:latest
+    container_name: eth1-holesky
+    restart: always
     ports:
       - "30303:30303/tcp"  # P2P
       - "30303:30303/udp"  # P2P
       - "8545:8545"        # HTTP RPC
+      - "8546:8546"        # WebSocket RPC
       - "8551:8551"        # Auth RPC
       - "6060:6060"        # Metrics
     volumes:
       - ${EXECUTION_DATA_PATH:-./execution-data-holesky}:/root/.ethereum
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-data-holesky}/secrets:/secrets:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     command: >
       --holesky
+      --datadir=/root/.ethereum/geth
       --http
       --http.addr=0.0.0.0
       --http.port=8545
-      --http.api=eth,net,web3,engine,admin
-      --http.corsdomain="*"
-      --http.vhosts="*"
+      --http.api=eth,net,web3
+      --http.vhosts=*
+      --ws
+      --ws.addr=0.0.0.0
+      --ws.port=8546
+      --ws.api=eth,net,web3
       --authrpc.addr=0.0.0.0
       --authrpc.port=8551
-      --authrpc.vhosts="*"
-      --authrpc.jwtsecret=/root/.ethereum/geth/jwtsecret
-      --syncmode=snap
+      --authrpc.jwtsecret=/secrets/jwtsecret
+      --authrpc.vhosts=*
       --metrics
       --metrics.addr=0.0.0.0
       --metrics.port=6060
-      --maxpeers=30
+      --syncmode=snap
+      --maxpeers=50
       --ipcdisable
-      --bootnodes=enode://ac906289e4b7f12df423d654c5a962b6ebe5b3a74cc9e06292a85221f9a64a6f1cfdd6b714ed6dacef51578f92b34c60ee91e9ede9c7f8fadc4d347326d95e2b@146.190.13.128:30303,enode://a3435a0155a3e837c02f5e7f5662a2f1fbc25b48e4dc232016e1c51b544cb5b4510ef633ea3278c0e970fa8ad8141e2d4d0f9f95456c537ff05fdf9b31c15072@178.128.136.233:30303
     networks:
       - holesky-network
     logging:
@@ -44,10 +76,11 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  consensus-client:
+  # Lighthouse (Consensus Client)
+  eth2:
     image: sigp/lighthouse:latest
-    container_name: consensus-client-holesky
-    restart: unless-stopped
+    container_name: eth2-holesky
+    restart: always
     ports:
       - "9000:9000/tcp"    # P2P
       - "9000:9000/udp"    # P2P
@@ -55,66 +88,39 @@ services:
       - "5054:5054"        # Metrics
     volumes:
       - ${CONSENSUS_DATA_PATH:-./consensus-data-holesky}:/root/.lighthouse
-      - ${EXECUTION_DATA_PATH:-./execution-data-holesky}/geth/jwtsecret:/root/jwtsecret:ro
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-data-holesky}/secrets:/secrets:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     command: >
       lighthouse bn
-      --network holesky
-      --datadir /root/.lighthouse
+      --network=holesky
+      --datadir=/root/.lighthouse
       --http
-      --http-address 0.0.0.0
-      --http-port 5052
+      --http-address=0.0.0.0
+      --http-port=5052
+      --execution-endpoint=http://eth1:8551
+      --execution-jwt=/secrets/jwtsecret
+      --checkpoint-sync-url=https://holesky.beaconstate.info
       --metrics
-      --metrics-address 0.0.0.0
-      --metrics-port 5054
-      --execution-endpoint http://execution-client-holesky:8551
-      --execution-jwt /root/jwtsecret
-      --checkpoint-sync-url https://holesky.beaconstate.info
-      --disable-deposit-contract-sync
-      --target-peers 20
-    depends_on:
-      - execution-client
+      --metrics-address=0.0.0.0
+      --metrics-port=5054
+      --port=9000
+      --discovery-port=9000
     networks:
       - holesky-network
+    depends_on:
+      - eth1
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
-  rocketpool-node:
-    image: rocketpool/smartnode:v1.16.0
-    container_name: rocketpool-node-holesky
-    restart: unless-stopped
-    command: ["node"]
-    ports:
-      - "8000:8000"        # Rocket Pool API (opcional)
-    volumes:
-      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-data-holesky}:/.rocketpool
-      - ${EXECUTION_DATA_PATH:-./execution-data-holesky}/geth/jwtsecret:/root/jwtsecret:ro
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      - ETH1_ENDPOINT=http://execution-client-holesky:8545
-      - ETH2_ENDPOINT=http://consensus-client-holesky:5052
-      - ROCKET_POOL_VERSION=v1.16.0
-      - ROCKET_POOL_NETWORK=holesky
-    depends_on:
-      - execution-client
-      - consensus-client
-    networks:
-      - holesky-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
+  # Serviços de monitoramento
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus-holesky
-    restart: unless-stopped
+    restart: always
     ports:
       - "9090:9090"
     volumes:
@@ -143,7 +149,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana-holesky
-    restart: unless-stopped
+    restart: always
     ports:
       - "3000:3000"
     volumes:
@@ -152,15 +158,9 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
-      - GF_SERVER_ROOT_URL=http://localhost:3000
-      - GF_SERVER_HTTP_ADDR=0.0.0.0
-      - GF_SERVER_HTTP_PORT=3000
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel
-    depends_on:
-      - prometheus
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
     networks:
       - holesky-network
     logging:
@@ -169,11 +169,10 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Node Exporter para métricas do sistema
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter-holesky
-    restart: unless-stopped
+    restart: always
     ports:
       - "9100:9100"
     volumes:
@@ -187,7 +186,6 @@ services:
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-      - '--web.listen-address=:9100'
     networks:
       - holesky-network
     logging:
@@ -195,88 +193,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-  # Opcional: Alertmanager para notificações
-  alertmanager:
-    image: prom/alertmanager:latest
-    container_name: alertmanager-holesky
-    restart: unless-stopped
-    ports:
-      - "9093:9093"
-    volumes:
-      - ${ALERTMANAGER_DATA_PATH:-./alertmanager-data-holesky}:/alertmanager
-      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-    command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
-      - '--web.external-url=http://localhost:9093'
-      - '--web.route-prefix=/'
-      - '--cluster.listen-address='
-    depends_on:
-      - prometheus
-    networks:
-      - holesky-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    profiles:
-      - alertmanager
 
 networks:
   holesky-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.21.0.0/16
-
-# Configurações de Health Check para Holesky
-x-healthcheck-defaults: &healthcheck-defaults
-  interval: 30s
-  timeout: 10s
-  retries: 3
-  start_period: 60s
-
-# Volumes nomeados para persistência de dados (alternativa)
-volumes:
-  execution-data-holesky:
-    driver: local
-  consensus-data-holesky:
-    driver: local
-  rocketpool-data-holesky:
-    driver: local
-  prometheus-data-holesky:
-    driver: local
-  grafana-data-holesky:
-    driver: local
-  alertmanager-data-holesky:
-    driver: local
-
-# Configurações específicas da Holesky Testnet:
-# - Chain ID: 17000 (0x4268 em hex)
-# - Checkpoint Sync: https://holesky.checkpoint.sigp.io
-# - Bootnodes: Específicos da Holesky
-# - Recursos reduzidos: Menos peers, menos armazenamento
-# - Prometheus retention: 7 dias / 5GB (vs 7 dias / 10GB mainnet)
-#
-# Para usar este arquivo:
-# 1. Crie o arquivo .env.holesky com as variáveis de ambiente
-# 2. Execute: docker-compose -f docker-compose-holesky.yml --env-file .env.holesky up -d
-# 3. Monitore: docker-compose -f docker-compose-holesky.yml logs -f
-#
-# Portas utilizadas:
-# - 30303: P2P Geth
-# - 9000: P2P Lighthouse  
-# - 8545: HTTP RPC Geth
-# - 8551: Auth RPC Geth
-# - 5052: HTTP API Lighthouse
-# - 6060: Metrics Geth
-# - 5054: Metrics Lighthouse
-# - 9090: Prometheus
-# - 3000: Grafana
-# - 9100: Node Exporter
-# - 9093: Alertmanager (opcional)
-# - 8000: Rocket Pool API
+    name: holesky-network

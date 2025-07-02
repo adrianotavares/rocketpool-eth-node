@@ -31,7 +31,7 @@ scrape_configs:
   # Geth - Cliente de Execução Holesky
   - job_name: 'geth-holesky'
     static_configs:
-      - targets: ['execution-client-holesky:6060']
+      - targets: ['eth1-holesky:6060']
         labels:
           client: 'geth'
           network: 'holesky'
@@ -43,14 +43,14 @@ scrape_configs:
   # Lighthouse - Cliente de Consenso Holesky
   - job_name: 'lighthouse-holesky'
     static_configs:
-      - targets: ['consensus-client-holesky:5054']
+      - targets: ['eth2-holesky:5054']
         labels:
           client: 'lighthouse'
           network: 'holesky'
           client_type: 'consensus'
     scrape_interval: 15s
     metrics_path: /metrics
-    scrape_timeout: 10s
+    scrape_timeout: 15s
 
   # Node Exporter - Métricas do Sistema
   - job_name: 'node-exporter'

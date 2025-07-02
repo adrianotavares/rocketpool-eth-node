@@ -12,14 +12,17 @@
     "to": "now"
   },
   "panels": [
-    {
+        {
       "id": 1,
       "type": "stat",
       "title": "Service Status",
       "targets": [
         {
           "expr": "up{job=\"lighthouse-holesky\"}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "intervalFactor": 1,
+          "maxDataPoints": 1
         }
       ],
       "gridPos": {
@@ -56,60 +59,27 @@
                 "value": 1
               }
             ]
-          }
+          },
+          "unit": "short",
+          "min": 0,
+          "max": 1
         }
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
       }
     },
     {
       "id": 2,
-      "type": "stat",
-      "title": "HTTP API Status",
-      "targets": [
-        {
-          "expr": "up{instance=\"consensus-client-holesky:5054\"}",
-          "refId": "A"
-        }
-      ],
-      "gridPos": {
-        "h": 6,
-        "w": 6,
-        "x": 6,
-        "y": 0
-      },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "red"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "green"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 3,
       "type": "stat",
       "title": "Beacon Head Slot",
       "targets": [
@@ -121,7 +91,7 @@
       "gridPos": {
         "h": 6,
         "w": 6,
-        "x": 12,
+        "x": 6,
         "y": 0
       },
       "fieldConfig": {
@@ -147,7 +117,7 @@
       }
     },
     {
-      "id": 4,
+      "id": 3,
       "type": "stat",
       "title": "Active Validators",
       "targets": [
@@ -159,7 +129,7 @@
       "gridPos": {
         "h": 6,
         "w": 6,
-        "x": 18,
+        "x": 12,
         "y": 0
       },
       "fieldConfig": {
@@ -178,6 +148,52 @@
               {
                 "color": "green",
                 "value": 1000000
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "HTTP API Status",
+      "targets": [
+        {
+          "expr": "up{instance=\"eth2-holesky:5054\"}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "DOWN"
+                },
+                "1": {
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
               }
             ]
           }

@@ -326,3 +326,17 @@ docker exec -it rocketpool-node rocketpool api wallet init
 ```
 
 **ATENÇÃO**: Mantenha sua frase mnemônica em local MUITO SEGURO!
+
+**faucet para Holesky**: <https://holesky-faucet.pk910.de/#/mine/7eed7a7a-c67b-412b-b06a-6b944f144ad9>
+
+**Comando para inicializar a wallet**
+
+```bash
+docker exec -it rocketpool-node-holesky rocketpool api wallet init
+```
+**Resultado do Comando para inicializar a wallet**
+
+```text
+"flavor quit hat daughter razor notice icon ski cave fringe invest long uniform record genre elevator retire cabbage erode juice under piano pink palm",
+"accountAddress":"0x6ded620e5451ede2fc0dc1665ff441728d9315e4"
+```
