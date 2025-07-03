@@ -28,7 +28,7 @@ rocketpool-eth-node/
 ├── ethereum-data/
 │   ├── execution-data/          # Dados do Geth
 │   ├── consensus-data/          # Dados do Lighthouse  
-│   ├── rocketpool-data/         # Dados do Rocket Pool
+│   ├── rocketpool/              # Dados do Rocket Pool
 │   ├── prometheus-data/         # Dados do Prometheus
 │   └── grafana-data/            # Dados do Grafana
 └── backups/                     # Backups automáticos
@@ -107,7 +107,7 @@ SSD_PATH="/Volumes/EthereumNode"  # macOS
 SSD_PATH="/mnt/ethereum-ssd"      # Linux
 
 # Criar estrutura de diretórios
-mkdir -p "$SSD_PATH/ethereum-data"/{execution-data,consensus-data,rocketpool-data,prometheus-data,grafana-data}
+mkdir -p "$SSD_PATH/ethereum-data"/{execution-data,consensus-data,rocketpool,prometheus-data,grafana-data}
 mkdir -p "$SSD_PATH/backups"
 
 # Definir permissões adequadas
@@ -152,7 +152,7 @@ docker ps
 tar -czf "$SSD_PATH/backups/backup-$(date +%Y%m%d-%H%M%S).tar.gz" \
   -C "$SSD_PATH/ethereum-data" \
   execution-data/geth/keystore \
-  rocketpool-data/.rocketpool
+  rocketpool/.rocketpool
 
 # Verificar saúde do SSD (macOS)
 diskutil info /dev/diskX
@@ -229,7 +229,7 @@ docker-compose down
 # Copiar dados existentes para SSD
 cp -r ./execution-data/* "$SSD_PATH/ethereum-data/execution-data/"
 cp -r ./consensus-data/* "$SSD_PATH/ethereum-data/consensus-data/"
-cp -r ./rocketpool-data/* "$SSD_PATH/ethereum-data/rocketpool-data/"
+cp -r ./rocketpool/* "$SSD_PATH/ethereum-data/rocketpool/"
 
 # Iniciar com configuração SSD
 docker-compose -f docker-compose.ssd.yml --env-file .env.ssd up -d

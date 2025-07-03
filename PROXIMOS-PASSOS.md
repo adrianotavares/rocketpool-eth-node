@@ -262,7 +262,7 @@ docker-compose -f docker-compose.ssd.yml logs -f
 # Backup automático (já incluído no monitor-ssd.sh)
 tar -czf "/Volumes/KINGSTON/ethereum-data/backups/backup-$(date +%Y%m%d-%H%M%S).tar.gz" \
   -C "/Volumes/KINGSTON/ethereum-data" \
-  execution-data/geth/keystore rocketpool-data/.rocketpool
+  execution-data/geth/keystore rocketpool/.rocketpool
 ```
 
 ### 6.2 Atualizações

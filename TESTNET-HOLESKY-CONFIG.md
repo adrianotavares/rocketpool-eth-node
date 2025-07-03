@@ -152,7 +152,7 @@ sudo rm -rf /Volumes/KINGSTON/ethereum-data/consensus-data/mainnet
 # OU limpar tudo (reset completo)
 sudo rm -rf /Volumes/KINGSTON/ethereum-data/execution-data/*
 sudo rm -rf /Volumes/KINGSTON/ethereum-data/consensus-data/*
-sudo rm -rf /Volumes/KINGSTON/ethereum-data/rocketpool-data/*
+sudo rm -rf /Volumes/KINGSTON/ethereum-data/rocketpool/*
 ```
 
 ### Passo 3: Aplicar Configurações de Testnet
@@ -420,7 +420,7 @@ sudo rm -rf /Volumes/KINGSTON/ethereum-data/execution-data/*
 sudo rm -rf /Volumes/KINGSTON/ethereum-data/consensus-data/*
 
 # Manter configurações do Rocket Pool se desejar
-# sudo rm -rf /Volumes/KINGSTON/ethereum-data/rocketpool-data/*
+# sudo rm -rf /Volumes/KINGSTON/ethereum-data/rocketpool/*
 ```
 
 ### Passo 4: Iniciar na Mainnet

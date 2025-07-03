@@ -36,7 +36,7 @@ rocketpool-eth-node/
 │       │   └── geth.json        # Dashboard específico Geth
 │       └── datasources/
 │           └── prometheus.yml   # Configuração datasource Prometheus
-├── rocketpool-data/             # Dados do Rocket Pool
+├── rocketpool/                  # Dados do Rocket Pool
 ├── docker-compose.yml           # Configuração original
 ├── docker-compose.ssd.yml       # Configuração para SSD externo
 ├── docker-compose-holesky.yml   # Configuração para testnet Holesky
@@ -350,7 +350,7 @@ docker logs --tail=20 consensus-client
    docker stop rocketpool-node
 
    # Criar configuração básica
-   mkdir -p rocketpool-data/.rocketpool
+   mkdir -p rocketpool/.rocketpool
 
    # O arquivo user-settings.yml já está criado automaticamente
    ```
@@ -436,7 +436,7 @@ nano alerts/node-alerts.yml
 tar -czf backup-$(date +%Y%m%d).tar.gz \
   execution-data/geth/keystore \
   consensus-data/mainnet/beacon/validator_db \
-  rocketpool-data/.rocketpool
+  rocketpool/.rocketpool
 ```
 
 **Otimização de Performance**:
@@ -477,7 +477,7 @@ docker-compose restart prometheus grafana
 
 ```bash
 # Verificar configuração
-cat rocketpool-data/.rocketpool/user-settings.yml
+cat rocketpool/.rocketpool/user-settings.yml
 docker logs rocketpool-node
 ```
 

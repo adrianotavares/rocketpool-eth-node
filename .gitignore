@@ -2,6 +2,9 @@
 execution-data/**
 execution-data-holesky/**
 consensus-data/**
+consensus-data-holesky/**
+rocketpool/**
+rocketpool-holesky/**
 prometheus-data/**
 prometheus-data-holesky/**
 grafana-data/**
@@ -116,8 +119,6 @@ validators/
 
 # Remote Access Configuration (Security Sensitive)
 *remote-access*
-setup-*-remote.*
-test-*-remote.*
 
 # Archives
 *.tar

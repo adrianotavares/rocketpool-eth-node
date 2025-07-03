@@ -12,7 +12,7 @@ services:
     ports:
       - "8000:8000"        # API Rocket Pool
     volumes:
-      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-data-holesky}:/.rocketpool
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-holesky}:/.rocketpool
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
@@ -43,7 +43,7 @@ services:
       - "6060:6060"        # Metrics
     volumes:
       - ${EXECUTION_DATA_PATH:-./execution-data-holesky}:/root/.ethereum
-      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-data-holesky}/secrets:/secrets:ro
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-holesky}/secrets:/secrets:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     command: >
@@ -88,7 +88,7 @@ services:
       - "5054:5054"        # Metrics
     volumes:
       - ${CONSENSUS_DATA_PATH:-./consensus-data-holesky}:/root/.lighthouse
-      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-data-holesky}/secrets:/secrets:ro
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-holesky}/secrets:/secrets:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     command: >

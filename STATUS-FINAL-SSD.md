@@ -48,7 +48,7 @@
 
 - **Status**: Temporariamente desabilitado
 - **Motivo**: Requer configuração adicional específica
-- **Dados**: Preparados em /Volumes/KINGSTON/ethereum-data/rocketpool-data
+- **Dados**: Preparados em /Volumes/KINGSTON/ethereum-data/rocketpool
 - **Configuração**: user-settings.yml criado e pronto
 
 ## COMO USAR

@@ -45,7 +45,7 @@ services:
       - execution
       - consensus
     volumes:
-      - ./rocketpool-data:/.rocketpool
+      - ./rocketpool:/.rocketpool
     ports:
       - "8000:8000"
     command: ["node"]

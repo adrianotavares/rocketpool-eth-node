@@ -80,7 +80,7 @@ if [[ -n "$SSD_MOUNT_PATH" ]]; then
         # Usar caminhos locais como fallback
         export EXECUTION_DATA_PATH="./execution-data-holesky"
         export CONSENSUS_DATA_PATH="./consensus-data-holesky"
-        export ROCKETPOOL_DATA_PATH="./rocketpool-data-holesky"
+        export ROCKETPOOL_DATA_PATH="./rocketpool-holesky"
         export PROMETHEUS_DATA_PATH="./prometheus-data-holesky"
         export GRAFANA_DATA_PATH="./grafana-data-holesky"
         export ALERTMANAGER_DATA_PATH="./alertmanager-data-holesky"

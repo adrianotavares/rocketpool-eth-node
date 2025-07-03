@@ -89,7 +89,7 @@ services:
     ports:
       - "8000:8000"        # Rocket Pool API (opcional)
     volumes:
-      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-data}:/.rocketpool
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool}:/.rocketpool
       - ${EXECUTION_DATA_PATH:-./execution-data}/geth/jwtsecret:/root/jwtsecret:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro

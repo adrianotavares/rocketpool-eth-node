@@ -153,7 +153,7 @@ create_directory_structure() {
         "$SSD_PATH/ethereum-data"
         "$SSD_PATH/ethereum-data/execution-data"
         "$SSD_PATH/ethereum-data/consensus-data"
-        "$SSD_PATH/ethereum-data/rocketpool-data"
+        "$SSD_PATH/ethereum-data/rocketpool"
         "$SSD_PATH/ethereum-data/prometheus-data"
         "$SSD_PATH/ethereum-data/grafana-data"
         "$SSD_PATH/backups"
