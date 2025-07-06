@@ -31,7 +31,7 @@ scrape_configs:
   # Geth - Cliente de Execução Holesky
   - job_name: 'geth-holesky'
     static_configs:
-      - targets: ['eth1-holesky:6060']
+      - targets: ['geth:6060']
         labels:
           client: 'geth'
           network: 'holesky'
@@ -43,7 +43,7 @@ scrape_configs:
   # Lighthouse - Cliente de Consenso Holesky
   - job_name: 'lighthouse-holesky'
     static_configs:
-      - targets: ['eth2-holesky:5054']
+      - targets: ['lighthouse:5054']
         labels:
           client: 'lighthouse'
           network: 'holesky'

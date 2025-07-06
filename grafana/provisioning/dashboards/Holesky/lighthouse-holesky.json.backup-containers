@@ -160,7 +160,7 @@
       "title": "HTTP API Status",
       "targets": [
         {
-          "expr": "up{instance=\"lighthouse:5054\"}",
+          "expr": "up{instance=\"eth2-holesky:5054\"}",
           "refId": "A"
         }
       ],

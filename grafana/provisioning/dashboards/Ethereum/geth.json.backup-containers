@@ -1,8 +1,8 @@
 {
   "id": null,
-  "uid": "lighthouse-holesky-monitoring",
-  "title": "Lighthouse Holesky Testnet Monitoring",
-  "tags": ["ethereum", "lighthouse", "consensus", "holesky", "testnet"],
+  "uid": "geth-monitoring",
+  "title": "Geth Server Monitoring",
+  "tags": ["ethereum", "geth", "execution"],
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,
@@ -12,17 +12,14 @@
     "to": "now"
   },
   "panels": [
-        {
+    {
       "id": 1,
       "type": "stat",
-      "title": "Service Status",
+      "title": "Current Block Header",
       "targets": [
         {
-          "expr": "up{job=\"lighthouse-holesky\"}",
-          "refId": "A",
-          "instant": true,
-          "intervalFactor": 1,
-          "maxDataPoints": 1
+          "expr": "chain_head_header{job=\"execution-client\"}",
+          "refId": "A"
         }
       ],
       "gridPos": {
@@ -33,21 +30,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "red"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "green"
-                }
-              },
-              "type": "value"
-            }
-          ],
+          "unit": "short",
           "thresholds": {
             "steps": [
               {
@@ -55,36 +38,25 @@
                 "value": null
               },
               {
+                "color": "yellow",
+                "value": 1000000
+              },
+              {
                 "color": "green",
-                "value": 1
+                "value": 20000000
               }
             ]
-          },
-          "unit": "short",
-          "min": 0,
-          "max": 1
+          }
         }
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": ["lastNotNull"],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto"
       }
     },
     {
       "id": 2,
       "type": "stat",
-      "title": "Beacon Head Slot",
+      "title": "Finalized Block",
       "targets": [
         {
-          "expr": "beacon_head_slot{job=\"lighthouse-holesky\"}",
+          "expr": "chain_head_finalized{job=\"execution-client\"}",
           "refId": "A"
         }
       ],
@@ -109,7 +81,7 @@
               },
               {
                 "color": "green",
-                "value": 4000000
+                "value": 20000000
               }
             ]
           }
@@ -119,10 +91,10 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Active Validators",
+      "title": "Connected Peers",
       "targets": [
         {
-          "expr": "beacon_current_active_validators{job=\"lighthouse-holesky\"}",
+          "expr": "p2p_peers{job=\"execution-client\"}",
           "refId": "A"
         }
       ],
@@ -143,11 +115,11 @@
               },
               {
                 "color": "yellow",
-                "value": 100000
+                "value": 5
               },
               {
                 "color": "green",
-                "value": 1000000
+                "value": 10
               }
             ]
           }
@@ -157,10 +129,10 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "HTTP API Status",
+      "title": "Service Status",
       "targets": [
         {
-          "expr": "up{instance=\"lighthouse:5054\"}",
+          "expr": "up{job=\"execution-client\"}",
           "refId": "A"
         }
       ],
@@ -203,12 +175,22 @@
     {
       "id": 5,
       "type": "timeseries",
-      "title": "Slot Progress",
+      "title": "Block Progress",
       "targets": [
         {
-          "expr": "beacon_head_slot{job=\"lighthouse-holesky\"}",
+          "expr": "chain_head_header{job=\"execution-client\"}",
           "refId": "A",
-          "legendFormat": "Current Slot"
+          "legendFormat": "Header"
+        },
+        {
+          "expr": "chain_head_receipt{job=\"execution-client\"}",
+          "refId": "B",
+          "legendFormat": "Receipt"
+        },
+        {
+          "expr": "chain_head_finalized{job=\"execution-client\"}",
+          "refId": "C",
+          "legendFormat": "Finalized"
         }
       ],
       "gridPos": {
@@ -226,17 +208,12 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "Epoch Progress",
+      "title": "P2P Peers",
       "targets": [
         {
-          "expr": "beacon_finalized_epoch{job=\"lighthouse-holesky\"}",
+          "expr": "p2p_peers{job=\"execution-client\"}",
           "refId": "A",
-          "legendFormat": "Finalized Epoch"
-        },
-        {
-          "expr": "beacon_current_justified_epoch{job=\"lighthouse-holesky\"}",
-          "refId": "B",
-          "legendFormat": "Justified Epoch"
+          "legendFormat": "Connected Peers"
         }
       ],
       "gridPos": {

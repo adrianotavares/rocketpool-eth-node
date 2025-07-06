@@ -98,7 +98,7 @@ check_docker_containers() {
         return 1
     fi
     
-    CONTAINERS=("eth1-holesky" "eth2-holesky" "rocketpool-node-holesky" "prometheus-holesky" "grafana-holesky" "node-exporter-holesky")
+    CONTAINERS=("geth" "lighthouse" "rocketpool-node-holesky" "prometheus-holesky" "grafana-holesky" "node-exporter-holesky")
     
     for container in "${CONTAINERS[@]}"; do
         if docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "$container"; then
@@ -116,7 +116,7 @@ check_sync_status() {
     echo "============================="
     
     # Verificar Geth
-    if curl -s -X POST -H "Content-Type: application/json" \
+    if curl -s --max-time 10 -X POST -H "Content-Type: application/json" \
         --data '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}' \
         http://localhost:8545 > /tmp/geth_sync_holesky 2>/dev/null; then
         
@@ -129,16 +129,32 @@ check_sync_status() {
         else
             CURRENT=$(echo "$SYNC_RESULT" | jq -r '.currentBlock' 2>/dev/null || echo "unknown")
             HIGHEST=$(echo "$SYNC_RESULT" | jq -r '.highestBlock' 2>/dev/null || echo "unknown")
+            
+            # Converter hex para decimal se possível
+            if [[ "$CURRENT" =~ ^0x[0-9a-fA-F]+$ ]]; then
+                CURRENT_DEC=$(printf "%d" "$CURRENT" 2>/dev/null || echo "unknown")
+                CURRENT="$CURRENT_DEC"
+            fi
+            if [[ "$HIGHEST" =~ ^0x[0-9a-fA-F]+$ ]]; then
+                HIGHEST_DEC=$(printf "%d" "$HIGHEST" 2>/dev/null || echo "unknown")
+                HIGHEST="$HIGHEST_DEC"
+            fi
+            
             log_warning "Geth: Sincronizando... Bloco $CURRENT de $HIGHEST"
         fi
         
         rm -f /tmp/geth_sync_holesky
     else
-        log_error "Geth: Não está respondendo na porta 8545"
+        # Verificar se o Geth está iniciando
+        if docker ps --filter name=geth --format "{{.Status}}" | grep -q "Up"; then
+            log_warning "Geth: Iniciando... (porta 8545 ainda não acessível)"
+        else
+            log_error "Geth: Container não está executando"
+        fi
     fi
     
     # Verificar Chain ID (Holesky = 17000 = 0x4268)
-    if curl -s -X POST -H "Content-Type: application/json" \
+    if curl -s --max-time 10 -X POST -H "Content-Type: application/json" \
         --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' \
         http://localhost:8545 > /tmp/geth_chain_holesky 2>/dev/null; then
         
@@ -147,18 +163,20 @@ check_sync_status() {
         if [ "$CHAIN_ID" = "0x4268" ]; then
             log_success "Geth: Conectado à Holesky (Chain ID: 17000)"
         elif [ "$CHAIN_ID" != "error" ] && [ "$CHAIN_ID" != "null" ]; then
-            log_warning "Geth: Chain ID incorreto: $CHAIN_ID (esperado: 0x4268)"
+            CHAIN_ID_DEC=$(printf "%d" "$CHAIN_ID" 2>/dev/null || echo "unknown")
+            log_warning "Geth: Chain ID incorreto: $CHAIN_ID ($CHAIN_ID_DEC) - esperado: 0x4268 (17000)"
         fi
         
         rm -f /tmp/geth_chain_holesky
     fi
     
     # Verificar número de peers
-    if curl -s -X POST -H "Content-Type: application/json" \
+    if curl -s --max-time 10 -X POST -H "Content-Type: application/json" \
         --data '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' \
         http://localhost:8545 > /tmp/geth_peers_holesky 2>/dev/null; then
         
-        PEER_COUNT=$(cat /tmp/geth_peers_holesky | jq -r '.result' 2>/dev/null | xargs printf "%d" 2>/dev/null || echo "0")
+        PEER_COUNT_HEX=$(cat /tmp/geth_peers_holesky | jq -r '.result' 2>/dev/null || echo "0x0")
+        PEER_COUNT=$(printf "%d" "$PEER_COUNT_HEX" 2>/dev/null || echo "0")
         
         if [ "$PEER_COUNT" -gt 0 ]; then
             log_success "Geth Peers: $PEER_COUNT conectados"
@@ -170,7 +188,7 @@ check_sync_status() {
     fi
     
     # Verificar Lighthouse
-    if curl -s "http://localhost:5052/eth/v1/node/syncing" > /tmp/lighthouse_sync_holesky 2>/dev/null; then
+    if curl -s --max-time 10 "http://localhost:5052/eth/v1/node/syncing" > /tmp/lighthouse_sync_holesky 2>/dev/null; then
         IS_SYNCING=$(cat /tmp/lighthouse_sync_holesky | jq -r '.data.is_syncing' 2>/dev/null || echo "error")
         
         if [ "$IS_SYNCING" = "false" ]; then
@@ -183,7 +201,12 @@ check_sync_status() {
         
         rm -f /tmp/lighthouse_sync_holesky
     else
-        log_error "Lighthouse: Não está respondendo na porta 5052"
+        # Verificar se o Lighthouse está iniciando
+        if docker ps --filter name=lighthouse --format "{{.Status}}" | grep -q "Up"; then
+            log_warning "Lighthouse: Iniciando... (porta 5052 ainda não acessível)"
+        else
+            log_error "Lighthouse: Container não está executando"
+        fi
     fi
     
     echo
@@ -193,39 +216,152 @@ check_system_resources() {
     echo -e "${CYAN}RECURSOS DO SISTEMA${NC}"
     echo "========================"
     
-    # CPU Load Average
+    # CPU Load Average - Versão corrigida e robusta
     if command -v uptime &> /dev/null; then
-        LOAD=$(uptime | awk -F'load average:' '{print $2}' | xargs)
-        echo "CPU Load Average: $LOAD"
+        UPTIME_OUTPUT=$(uptime)
+        
+        # Método 1: Regex para macOS (load averages: X.XX Y.YY Z.ZZ)
+        if [[ "$UPTIME_OUTPUT" =~ load[[:space:]]+averages:[[:space:]]*([0-9.]+)[[:space:]]+([0-9.]+)[[:space:]]+([0-9.]+) ]]; then
+            LOAD_1MIN="${BASH_REMATCH[1]}"
+            LOAD_5MIN="${BASH_REMATCH[2]}"
+            LOAD_15MIN="${BASH_REMATCH[3]}"
+            echo "CPU Load Average: $LOAD_1MIN $LOAD_5MIN $LOAD_15MIN (1min 5min 15min)"
+        
+        # Método 2: Regex para Linux (load average: X.XX, Y.YY, Z.ZZ)
+        elif [[ "$UPTIME_OUTPUT" =~ load[[:space:]]+average:[[:space:]]*([0-9.]+),[[:space:]]*([0-9.]+),[[:space:]]*([0-9.]+) ]]; then
+            LOAD_1MIN="${BASH_REMATCH[1]}"
+            LOAD_5MIN="${BASH_REMATCH[2]}"
+            LOAD_15MIN="${BASH_REMATCH[3]}"
+            echo "CPU Load Average: $LOAD_1MIN $LOAD_5MIN $LOAD_15MIN (1min 5min 15min)"
+        
+        # Método 3: Fallback usando awk - mais robusto
+        else
+            # Tentar extrair os números usando awk
+            LOAD_VALUES=$(echo "$UPTIME_OUTPUT" | awk '{
+                for(i=1; i<=NF; i++) {
+                    if($i ~ /^[0-9]+\.[0-9]+$/) {
+                        loads[++count] = $i
+                    } else if($i ~ /^[0-9]+\.[0-9]+,$/) {
+                        loads[++count] = substr($i, 1, length($i)-1)
+                    }
+                }
+                if(count >= 3) {
+                    print loads[count-2], loads[count-1], loads[count]
+                }
+            }')
+            
+            if [[ -n "$LOAD_VALUES" ]]; then
+                echo "CPU Load Average: $LOAD_VALUES (1min 5min 15min)"
+            else
+                # Último fallback - pegar a parte após "load"
+                LOAD_PART=$(echo "$UPTIME_OUTPUT" | sed -n 's/.*load[^:]*[:[:space:]]*\([0-9.,[:space:]]*\).*/\1/p' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//')
+                if [[ -n "$LOAD_PART" ]]; then
+                    echo "CPU Load Average: $LOAD_PART"
+                else
+                    echo "CPU Load Average: N/A (formato não reconhecido)"
+                    echo "  Debug: $UPTIME_OUTPUT"
+                fi
+            fi
+        fi
+    else
+        echo "CPU Load Average: N/A (uptime não disponível)"
     fi
     
-    # Memória
+    # Memória - Informações detalhadas
+    echo
     if command -v free &> /dev/null; then
+        # Linux
+        echo "Memória do Sistema:"
         free -h | head -2
     elif command -v vm_stat &> /dev/null; then
         # macOS
+        echo "Memória do Sistema (macOS):"
         VM_STAT=$(vm_stat)
         PAGES_FREE=$(echo "$VM_STAT" | grep "Pages free" | awk '{print $3}' | tr -d '.')
         PAGES_ACTIVE=$(echo "$VM_STAT" | grep "Pages active" | awk '{print $3}' | tr -d '.')
         PAGES_INACTIVE=$(echo "$VM_STAT" | grep "Pages inactive" | awk '{print $3}' | tr -d '.')
+        PAGES_WIRED=$(echo "$VM_STAT" | grep "Pages wired down" | awk '{print $4}' | tr -d '.')
         
         # Cada página = 4KB no macOS
-        FREE_MB=$((PAGES_FREE * 4 / 1024))
-        ACTIVE_MB=$((PAGES_ACTIVE * 4 / 1024))
-        INACTIVE_MB=$((PAGES_INACTIVE * 4 / 1024))
-        
-        echo "Memória Livre: ${FREE_MB}MB | Ativa: ${ACTIVE_MB}MB | Inativa: ${INACTIVE_MB}MB"
+        if [[ -n "$PAGES_FREE" && "$PAGES_FREE" -gt 0 ]]; then
+            FREE_MB=$((PAGES_FREE * 4 / 1024))
+            ACTIVE_MB=$((PAGES_ACTIVE * 4 / 1024))
+            INACTIVE_MB=$((PAGES_INACTIVE * 4 / 1024))
+            WIRED_MB=$((PAGES_WIRED * 4 / 1024))
+            
+            echo "  Livre: ${FREE_MB}MB | Ativa: ${ACTIVE_MB}MB | Inativa: ${INACTIVE_MB}MB | Wired: ${WIRED_MB}MB"
+        else
+            echo "  Erro ao obter estatísticas de memória"
+        fi
+    else
+        echo "Memória: N/A (comandos não disponíveis)"
     fi
     
-    # Uso de memória Docker específico para containers Holesky
+    # Uso de memória e CPU dos containers Docker - Versão melhorada
     echo
-    echo "Uso de Memória dos Containers Holesky:"
-    if docker ps --filter name=holesky --format "{{.Names}}" | grep -q .; then
-        docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}" \
-            $(docker ps --filter name=holesky --format "{{.Names}}" 2>/dev/null) 2>/dev/null || \
-            echo "Erro ao obter estatísticas dos containers"
+    echo "Uso de Recursos dos Containers Holesky:"
+    echo "---------------------------------------"
+    
+    # Lista completa dos containers relevantes para Holesky
+    HOLESKY_CONTAINERS=(
+        "geth"
+        "lighthouse" 
+        "rocketpool-node-holesky"
+        "prometheus-holesky"
+        "grafana-holesky"
+        "node-exporter-holesky"
+    )
+    
+    # Verificar quais containers estão rodando
+    RUNNING_CONTAINERS=()
+    for container in "${HOLESKY_CONTAINERS[@]}"; do
+        if docker ps --format "{{.Names}}" | grep -q "^${container}$"; then
+            RUNNING_CONTAINERS+=("$container")
+        fi
+    done
+    
+    if [ ${#RUNNING_CONTAINERS[@]} -gt 0 ]; then
+        # Cabeçalho personalizado
+        printf "%-25s %-20s %-8s %-8s\n" "CONTAINER" "MEMÓRIA" "CPU%" "STATUS"
+        printf "%-25s %-20s %-8s %-8s\n" "-------------------------" "--------------------" "--------" "--------"
+        
+        # Obter stats de cada container individualmente para melhor formatação
+        for container in "${RUNNING_CONTAINERS[@]}"; do
+            # Obter stats do container específico
+            STATS=$(docker stats --no-stream --format "{{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}" "$container" 2>/dev/null)
+            
+            if [[ -n "$STATS" ]]; then
+                # Extrair campos usando IFS
+                IFS=$'\t' read -r name mem cpu <<< "$STATS"
+                
+                # Limpar espaços extras
+                name=$(echo "$name" | xargs)
+                mem=$(echo "$mem" | xargs)
+                cpu=$(echo "$cpu" | xargs)
+                
+                # Formatar saída
+                printf "%-25s %-20s %-8s %-8s\n" "$name" "$mem" "$cpu" "Running"
+            fi
+        done
+        
+        # Estatísticas resumidas
+        echo
+        echo "Containers em execução: ${#RUNNING_CONTAINERS[@]}/${#HOLESKY_CONTAINERS[@]}"
+        
+        # Containers parados
+        STOPPED_CONTAINERS=()
+        for container in "${HOLESKY_CONTAINERS[@]}"; do
+            if ! docker ps --format "{{.Names}}" | grep -q "^${container}$"; then
+                STOPPED_CONTAINERS+=("$container")
+            fi
+        done
+        
+        if [ ${#STOPPED_CONTAINERS[@]} -gt 0 ]; then
+            echo "Containers parados: ${STOPPED_CONTAINERS[*]}"
+        fi
     else
         echo "Nenhum container Holesky em execução"
+        echo "Containers esperados: ${HOLESKY_CONTAINERS[*]}"
     fi
     
     echo
@@ -345,13 +481,13 @@ show_useful_commands() {
     echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky logs -f"
     echo
     echo "# Ver logs específicos:"
-    echo "docker logs eth1-holesky"
-    echo "docker logs eth2-holesky"
+    echo "docker logs geth"
+    echo "docker logs lighthouse"
     echo "docker logs rocketpool-node-holesky"
     echo
     echo "# Reiniciar um serviço:"
-    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart eth1"
-    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart eth2"
+    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart geth"
+    echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart lighthouse"
     echo "docker-compose -f docker-compose-holesky.yml --env-file .env.holesky restart rocketpool-node"
     echo
     echo "# Acessar Rocket Pool CLI:"

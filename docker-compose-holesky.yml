@@ -105,6 +105,7 @@ services:
       --metrics-port=5054
       --port=9000
       --discovery-port=9000
+      --checkpoint-sync-url=https://holesky.checkpoint.sigp.io
     networks:
       - holesky-network
     depends_on:
