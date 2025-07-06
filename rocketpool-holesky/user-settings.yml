@@ -7,7 +7,7 @@ root:
   version: "1.16.0"
   
   # Rede Ethereum (holesky testnet)
-  network: "holesky"
+  network: "testnet"
   
   # Modo Native (false = Docker mode, true = Native mode)
   isNative: false
@@ -15,15 +15,18 @@ root:
   # Modo dos clientes (local/external)
   executionClientMode: external    # Cliente de execução externo (Geth)
   consensusClientMode: external    # Cliente de consenso externo (Lighthouse)
-  
-  # URLs dos clientes externos (nomes dos containers Docker para Holesky)
-  externalExecutionHttpUrl: http://execution-client-holesky:8545     # HTTP RPC do Geth
-  externalExecutionWsUrl: ws://execution-client-holesky:8546         # WebSocket do Geth
-  externalConsensusHttpUrl: http://consensus-client-holesky:5052     # HTTP API do Lighthouse
-  
-  # Configurações adicionais para testnet
-  enableMetrics: true
-  enableMevBoost: false
+
+smartnode:
+  network: testnet
+
+# Configuração do cliente de execução externo
+externalExecution:
+  httpUrl: http://geth:8545     # HTTP RPC do Geth
+  wsUrl: ws://geth:8546         # WebSocket do Geth
+
+# Configuração do cliente de consenso externo
+externalLighthouse:
+  httpUrl: http://lighthouse:5052     # HTTP API do Lighthouse
 
 # Observações para Testnet Holesky:
 # - Chain ID: 17000 (diferente da mainnet que é 1)

@@ -1,5 +1,5 @@
 # Docker Compose para Testnet Holesky - Rocket Pool Node (Modo Docker Correto)
-# Configuração baseada na arquitetura oficial do Rocket Pool
+# Configuração basead      - execution-endpoint=http://geth:8551 na arquitetura oficial do Rocket Pool
 # Utiliza containers separados para cada componente
 
 services:
@@ -21,8 +21,8 @@ services:
     networks:
       - holesky-network
     depends_on:
-      - eth1
-      - eth2
+      - geth
+      - lighthouse
     logging:
       driver: "json-file"
       options:
@@ -30,9 +30,9 @@ services:
         max-file: "3"
 
   # Geth (Execution Client)
-  eth1:
+  geth:
     image: ethereum/client-go:latest
-    container_name: eth1-holesky
+    container_name: geth
     restart: always
     ports:
       - "30303:30303/tcp"  # P2P
@@ -43,7 +43,7 @@ services:
       - "6060:6060"        # Metrics
     volumes:
       - ${EXECUTION_DATA_PATH:-./execution-data-holesky}:/root/.ethereum
-      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-holesky}/secrets:/secrets:ro
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-holesky}/secrets:/secrets:rw
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     command: >
@@ -77,9 +77,9 @@ services:
         max-file: "3"
 
   # Lighthouse (Consensus Client)
-  eth2:
+  lighthouse:
     image: sigp/lighthouse:latest
-    container_name: eth2-holesky
+    container_name: lighthouse
     restart: always
     ports:
       - "9000:9000/tcp"    # P2P
@@ -88,7 +88,7 @@ services:
       - "5054:5054"        # Metrics
     volumes:
       - ${CONSENSUS_DATA_PATH:-./consensus-data-holesky}:/root/.lighthouse
-      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-holesky}/secrets:/secrets:ro
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-holesky}/secrets:/secrets:rw
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     command: >
@@ -98,9 +98,8 @@ services:
       --http
       --http-address=0.0.0.0
       --http-port=5052
-      --execution-endpoint=http://eth1:8551
+      --execution-endpoint=http://geth:8551
       --execution-jwt=/secrets/jwtsecret
-      --checkpoint-sync-url=https://holesky.beaconstate.info
       --metrics
       --metrics-address=0.0.0.0
       --metrics-port=5054
@@ -109,7 +108,7 @@ services:
     networks:
       - holesky-network
     depends_on:
-      - eth1
+      - geth
     logging:
       driver: "json-file"
       options:

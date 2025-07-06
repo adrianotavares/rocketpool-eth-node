@@ -17,9 +17,9 @@ root:
   consensusClientMode: external    # Cliente de consenso externo (Lighthouse)
   
   # URLs dos clientes externos (nomes dos containers Docker para Holesky)
-  externalExecutionHttpUrl: http://execution-client-holesky:8545     # HTTP RPC do Geth
-  externalExecutionWsUrl: ws://execution-client-holesky:8546         # WebSocket do Geth
-  externalConsensusHttpUrl: http://consensus-client-holesky:5052     # HTTP API do Lighthouse
+  externalExecutionHttpUrl: http://localhost:8545     # HTTP RPC do Geth
+  externalExecutionWsUrl: ws://localhost:8546         # WebSocket do Geth
+  externalConsensusHttpUrl: http://localhost:5052     # HTTP API do Lighthouse
   
   # Configurações adicionais para testnet
   enableMetrics: true
