@@ -111,6 +111,23 @@ check_docker_containers() {
     echo
 }
 
+# Função para obter informações de sincronização via logs
+get_geth_sync_info() {
+    local geth_log=$(docker logs geth --tail 5 2>&1 | grep "Syncing:" | tail -1 2>/dev/null)
+    if [ -n "$geth_log" ]; then
+        local sync_percent=$(echo "$geth_log" | grep -o 'synced=[0-9]*\.[0-9]*%' | sed 's/synced=//')
+        local eta=$(echo "$geth_log" | grep -o 'eta=[0-9a-z.]*' | sed 's/eta=//')
+        
+        if [ -n "$sync_percent" ] && [ -n "$eta" ]; then
+            echo "SYNCING:$sync_percent:$eta"
+        else
+            echo "UNAVAILABLE"
+        fi
+    else
+        echo "UNAVAILABLE"
+    fi
+}
+
 check_sync_status() {
     echo -e "${CYAN}STATUS DE SINCRONIZAÇÃO${NC}"
     echo "============================="
@@ -207,6 +224,15 @@ check_sync_status() {
         else
             log_error "Lighthouse: Container não está executando"
         fi
+    fi
+    
+    # Obter informações de sincronização do Geth via logs
+    SYNC_INFO=$(get_geth_sync_info)
+    if [ "$SYNC_INFO" != "UNAVAILABLE" ]; then
+        IFS=':' read -r sync_status sync_percent eta <<< "$SYNC_INFO"
+        log_info "Geth Sync: $sync_status | Progresso: $sync_percent | ETA: $eta"
+    else
+        log_warning "Geth Sync: Informações de progresso não disponíveis"
     fi
     
     echo
