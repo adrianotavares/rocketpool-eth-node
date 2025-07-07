@@ -5,9 +5,12 @@
 
 set -e
 
+# Mudar para o diretório raiz do projeto
+cd "$(dirname "$0")/../.."
+
 # Configurações
-DASHBOARD_DIR="/Users/adrianotavares/dev/rocketpool-eth-node/grafana/dashboards"
-PROVISIONING_DIR="/Users/adrianotavares/dev/rocketpool-eth-node/grafana/provisioning/dashboards"
+DASHBOARD_DIR="grafana/dashboards"
+PROVISIONING_DIR="grafana/provisioning/dashboards"
 RECOMMENDED_DIR="$PROVISIONING_DIR/Recommended"
 
 echo "🔄 Importando dashboards recomendados..."

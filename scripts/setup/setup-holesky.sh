@@ -5,6 +5,9 @@
 
 set -e  # Sair em caso de erro
 
+# Mudar para o diretório raiz do projeto
+cd "$(dirname "$0")/../.."
+
 # Cores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

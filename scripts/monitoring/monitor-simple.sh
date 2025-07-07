@@ -2,6 +2,9 @@
 
 # Script simplificado para monitorar o status do Rocket Pool Holesky
 
+# Mudar para o diretório raiz do projeto
+cd "$(dirname "$0")/../.."
+
 # Cores
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -71,9 +74,9 @@ echo ""
 
 # Dashboards
 echo -e "${CYAN}📈 DASHBOARDS:${NC}"
-HOLESKY_COUNT=$(find /Users/adrianotavares/dev/rocketpool-eth-node/grafana/provisioning/dashboards/Holesky -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
-ETHEREUM_COUNT=$(find /Users/adrianotavares/dev/rocketpool-eth-node/grafana/provisioning/dashboards/Ethereum -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
-RECOMMENDED_COUNT=$(find /Users/adrianotavares/dev/rocketpool-eth-node/grafana/provisioning/dashboards/Recommended -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+HOLESKY_COUNT=$(find grafana/provisioning/dashboards/Holesky -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+ETHEREUM_COUNT=$(find grafana/provisioning/dashboards/Ethereum -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+RECOMMENDED_COUNT=$(find grafana/provisioning/dashboards/Recommended -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
 
 echo -e "${GREEN}✅ Holesky:${NC} $HOLESKY_COUNT dashboards"
 echo -e "${GREEN}✅ Ethereum:${NC} $ETHEREUM_COUNT dashboards"

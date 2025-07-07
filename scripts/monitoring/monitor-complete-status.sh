@@ -5,6 +5,9 @@
 
 set -e
 
+# Mudar para o diretório raiz do projeto
+cd "$(dirname "$0")/../.."
+
 # Cores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -138,9 +141,9 @@ done
 print_header "DASHBOARDS GRAFANA"
 
 # Contar dashboards
-original_count=$(count_dashboards "/Users/adrianotavares/dev/rocketpool-eth-node/grafana/provisioning/dashboards/Holesky")
-ethereum_count=$(count_dashboards "/Users/adrianotavares/dev/rocketpool-eth-node/grafana/provisioning/dashboards/Ethereum")
-recommended_count=$(count_dashboards "/Users/adrianotavares/dev/rocketpool-eth-node/grafana/provisioning/dashboards/Recommended")
+original_count=$(count_dashboards "grafana/provisioning/dashboards/Holesky")
+ethereum_count=$(count_dashboards "grafana/provisioning/dashboards/Ethereum")
+recommended_count=$(count_dashboards "grafana/provisioning/dashboards/Recommended")
 
 echo -e "${BLUE}📈 Dashboards Disponíveis:${NC}"
 echo -e "   ${GREEN}✅ Originais (Holesky):${NC} $original_count dashboards"

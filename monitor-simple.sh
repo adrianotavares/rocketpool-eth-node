@@ -1,1 +1,0 @@
-scripts/monitoring/monitor-simple.sh
