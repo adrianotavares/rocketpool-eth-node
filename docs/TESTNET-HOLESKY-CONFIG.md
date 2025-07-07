@@ -251,7 +251,7 @@ Os dashboards do Grafana funcionam igualmente na testnet, mas você observará:
 - **Geth Metrics**: <http://localhost:6060/debug/metrics/prometheus>
 - **Lighthouse Metrics**: <http://localhost:5054/metrics>
 
-### 📊 **Dashboards Grafana Criados**
+### **Dashboards Grafana Criados**
 
 Foram criados dois dashboards específicos para monitorar a testnet Holesky:
 
@@ -282,7 +282,7 @@ Foram criados dois dashboards específicos para monitorar a testnet Holesky:
   - Attestation Performance
   - Database Size
 
-### 🔧 **Configuração das Métricas**
+### **Configuração das Métricas**
 
 Os dashboards usam as seguintes configurações do Prometheus:
 
@@ -298,7 +298,7 @@ targets: ['consensus-client-holesky:5054']
 path: /metrics
 ```
 
-### 📈 **Acesso aos Dashboards**
+### **Acesso aos Dashboards**
 
 1. **Grafana**: <http://localhost:3000>
 2. **Login**: admin/admin (altere na primeira vez)
@@ -521,7 +521,7 @@ A testnet Holesky é uma ferramenta fundamental para:
 
 **Importante**: Este guia não altera sua configuração atual. Todas as mudanças sugeridas são apenas para referência caso decida testar na Holesky testnet.
 
-## 🎉 STATUS ATUAL (Atualizado em 01/07/2025)
+## STATUS ATUAL (Atualizado em 01/07/2025)
 
 **✅ CONFIGURAÇÃO COMPLETA E FUNCIONANDO!**
 

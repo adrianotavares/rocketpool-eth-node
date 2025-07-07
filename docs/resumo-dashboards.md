@@ -1,8 +1,8 @@
-# 🎯 Resumo Final: Dashboards Recomendados para Rocket Pool
+# Resumo Final: Dashboards Recomendados para Rocket Pool
 
-## ✅ Trabalho Concluído
+## Trabalho Concluído
 
-### 📊 Dashboards Baixados com Sucesso
+### Dashboards Baixados com Sucesso
 
 Todos os dashboards recomendados foram baixados e configurados automaticamente:
 
@@ -29,7 +29,7 @@ Todos os dashboards recomendados foram baixados e configurados automaticamente:
 3. **Backups criados** - Arquivos originais preservados
 4. **Documentação gerada** - README.md com instruções
 
-## 🚀 Próximos Passos
+## Próximos Passos
 
 ### 1. Importar Dashboards (Prioritário)
 
@@ -78,28 +78,28 @@ Após importar, verificar se as métricas estão sendo coletadas:
 
 ## 📋 Checklist de Validação
 
-### ✅ Dashboards Essenciais
+### Dashboards Essenciais
 
 - [ ] Lighthouse Summary importado e funcionando
 - [ ] Geth Dashboard importado e funcionando
 - [ ] Docker Host Overview importado e funcionando
 - [ ] Métricas do Rocket Pool aparecendo corretamente
 
-### ✅ Configurações
+### Configurações
 
 - [ ] Data sources configurados como "Prometheus"
 - [ ] Dashboards exibindo dados em tempo real
 - [ ] Alertas configurados (se aplicável)
 - [ ] Painéis customizados para o ambiente
 
-### ✅ Monitoramento
+### Monitoramento
 
 - [ ] Sincronização do Geth visível
 - [ ] Status do Lighthouse monitorado
 - [ ] Performance dos containers visível
 - [ ] Métricas do validador funcionando
 
-## 📊 Métricas Importantes a Acompanhar
+## Métricas Importantes a Acompanhar
 
 ### Execution Client (Geth)
 
@@ -129,7 +129,7 @@ Após importar, verificar se as métricas estão sendo coletadas:
 - **RPL Balance**: Saldo de RPL
 - **Minipool Status**: Status dos minipools
 
-## 🔧 Arquivos Criados
+## Arquivos Criados
 
 ### Scripts
 
@@ -147,7 +147,7 @@ Após importar, verificar se as métricas estão sendo coletadas:
 - `grafana/dashboards/` - Todos os dashboards configurados
 - `grafana/dashboards/*.backup` - Backups dos originais
 
-## 🎉 Benefícios Alcançados
+## Benefícios Alcançados
 
 1. **Monitoramento Completo**: Cobertura de todos os componentes
 2. **Dashboards Padronizados**: Baseados em projetos oficiais

@@ -1,6 +1,6 @@
-# ✅ CORREÇÕES DO MONITOR HOLESKY - RESUMO FINAL
+# CORREÇÕES DO MONITOR HOLESKY - RESUMO FINAL
 
-## 🎯 Problemas Identificados e Corrigidos
+## Problemas Identificados e Corrigidos
 
 ### 1. **CPU Load Average - Correção Completa**
 
@@ -84,9 +84,9 @@ Memória do Sistema (macOS):
 - **Timeouts**: Evita travamento do script
 - **Containers parados**: Identifica e lista containers não executando
 
-## 🎯 Status Final
+## Status Final
 
-### ✅ Funcionando Corretamente
+### Funcionando Corretamente
 
 - **CPU Load Average**: Detecção robusta em macOS/Linux
 - **Memória**: Informações completas do sistema
@@ -95,7 +95,7 @@ Memória do Sistema (macOS):
 - **Estatísticas**: CPU/RAM por container
 - **Robustez**: Fallbacks para casos especiais
 
-### 📊 Exemplo de Saída Completa
+### Exemplo de Saída Completa
 
 ```text
 RECURSOS DO SISTEMA
@@ -119,7 +119,7 @@ node-exporter-holesky     12.52MiB / 3.828GiB   0.00%      Running
 Containers em execução: 6/6
 ```
 
-## 📝 Comandos de Teste
+## Comandos de Teste
 
 ```bash
 # Teste completo

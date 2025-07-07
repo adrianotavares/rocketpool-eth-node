@@ -1,10 +1,10 @@
-# 🔍 Diagnóstico: Dashboard Lighthouse Holesky Sem Dados
+# Diagnóstico: Dashboard Lighthouse Holesky Sem Dados
 
-## 📊 Problema Atual
+## Problema Atual
 
 O dashboard "Lighthouse Holesky Testnet Monitoring" não está mostrando dados, mesmo que o Geth esteja funcionando corretamente.
 
-## 🔍 Investigação Realizada
+## Investigação Realizada
 
 ### 1. Status do Container
 
@@ -39,7 +39,7 @@ ERRO Error updating deposit contract cache
 lighthouse-holesky: down - Get "http://lighthouse:5054/metrics": dial tcp connect: connection refused
 ```
 
-## 🎯 Análise do Problema
+## Análise do Problema
 
 O Lighthouse está:
 
@@ -111,7 +111,7 @@ docker-compose -f docker-compose-holesky.yml up -d lighthouse
 - **Inicialização Lighthouse**: 5-15 minutos após Geth sincronizar
 - **APIs disponíveis**: Imediatamente após Lighthouse sincronizar
 
-## 🎯 Conclusão
+## Conclusão
 
 O problema provavelmente é temporal - o Lighthouse está aguardando o Geth completar a sincronização. Uma vez que o Geth esteja 100% sincronizado, o Lighthouse deve automaticamente:
 

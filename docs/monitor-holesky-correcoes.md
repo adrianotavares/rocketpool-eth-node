@@ -1,6 +1,6 @@
-# ✅ Monitor Holesky - Correções Aplicadas
+# Monitor Holesky - Correções Aplicadas
 
-## 🔧 Problemas Identificados e Soluções
+## Problemas Identificados e Soluções
 
 ### 1. **Nomes de Containers Desatualizados**
 
@@ -27,7 +27,7 @@
 - **Problema**: Erros genéricos quando serviços não respondiam
 - **Solução**: Distingue entre containers parados vs. serviços iniciando
 
-## 🔄 Correções Adicionais - CPU Load Average e Containers
+## Correções Adicionais - CPU Load Average e Containers
 
 ### 6. **CPU Load Average - Detecção Robusta**
 
@@ -83,7 +83,7 @@ node-exporter-holesky     12MiB / 16GiB  0.1%       Running
 Containers em execução: 6/6
 ```
 
-## 📊 Funcionalidades Corrigidas
+## Funcionalidades Corrigidas
 
 ### Status de Containers
 
@@ -109,7 +109,7 @@ Containers em execução: 6/6
 - ✅ Verifica conectividade de internet
 - ✅ Identifica serviços acessíveis vs. não acessíveis
 
-## 🎯 Comandos Disponíveis
+## Comandos Disponíveis
 
 ```bash
 # Verificação completa
@@ -165,7 +165,7 @@ Containers em execução: 6/6
 - [x] Tamanho dos diretórios
 - [x] Conectividade de rede
 
-## 🎉 Resultado Final
+## Resultado Final
 
 O script `monitor-holesky.sh` agora está **100% funcional** e fornece:
 

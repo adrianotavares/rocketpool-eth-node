@@ -1,6 +1,6 @@
-# ✅ Correção dos Dashboards Grafana - Restauração e Correção Mínima
+# Correção dos Dashboards Grafana - Restauração e Correção Mínima
 
-## 🎯 Problema Identificado
+## Problema Identificado
 
 O usuário reportou que as últimas alterações nos dashboards do Grafana "duplicaram algumas informações" e solicitou restauração dos backups com correção mínima, sem alterar o layout.
 
@@ -61,7 +61,7 @@ sed -i '' 's/eth2-holesky/lighthouse/g' grafana/provisioning/dashboards/Ethereum
 - ✅ API respondendo corretamente
 - ✅ Versão: 12.0.2
 
-## 📊 Resultado Final
+## Resultado Final
 
 ### Dashboards Corrigidos
 
@@ -90,13 +90,13 @@ sed -i '' 's/eth2-holesky/lighthouse/g' grafana/provisioning/dashboards/Ethereum
 - ✅ **Sem referências antigas**: eth1-holesky/eth2-holesky removidos
 - ✅ **Grafana funcionando**: API respondendo corretamente
 
-## 🎯 Próximos Passos
+## Próximos Passos
 
 1. **Verificar dashboards no Grafana**: <http://localhost:3000>
 2. **Confirmar métricas**: Verificar se as métricas dos containers aparecem corretamente
 3. **Testar navegação**: Confirmar que todos os painéis estão funcionando
 
-## ✅ Status: Correção Concluída
+## Status: Correção Concluída
 
 Os dashboards foram restaurados dos backups e corrigidos com alterações mínimas. O layout original foi preservado e apenas os nomes dos containers foram atualizados conforme necessário.
 

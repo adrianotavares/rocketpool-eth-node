@@ -1,14 +1,14 @@
 # Node Exporter - Explicação Detalhada
 
-## 🔍 O que é o Node Exporter?
+## O que é o Node Exporter?
 
 O **Node Exporter** é um exportador de métricas do sistema desenvolvido pela equipe do Prometheus. Ele é um componente fundamental do sistema de monitoramento do ambiente Rocket Pool, responsável por coletar métricas detalhadas sobre o sistema operacional e hardware da máquina onde está rodando.
 
-## 📊 Função Principal
+## Função Principal
 
 O container `node-exporter-holesky` coleta métricas detalhadas do sistema operacional e hardware, expondo-as em formato Prometheus na porta `9100`. Essas métricas são então coletadas pelo Prometheus e visualizadas no Grafana.
 
-## 🎯 Métricas Coletadas
+## Métricas Coletadas
 
 ### Sistema
 
@@ -84,7 +84,7 @@ node-exporter:
     - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
 ```
 
-## 🚀 Por que é Importante para Rocket Pool?
+## Por que é Importante para Rocket Pool?
 
 ### 1. **Monitoramento de Recursos**
 
@@ -110,7 +110,7 @@ node-exporter:
 - Correlaciona problemas dos nodes com recursos do sistema
 - Fornece dados para análise de incidentes
 
-## 📈 Visualização no Grafana
+## Visualização no Grafana
 
 As métricas coletadas pelo Node Exporter são visualizadas no Grafana através de dashboards específicos, proporcionando:
 
@@ -145,7 +145,7 @@ curl -s http://localhost:9100/metrics | grep node_up
 curl -s http://localhost:9100/metrics | grep -E "(node_cpu|node_memory|node_filesystem)"
 ```
 
-## 🔧 Configurações Avançadas
+## Configurações Avançadas
 
 ### Coletores Habilitados
 
@@ -167,7 +167,7 @@ O Node Exporter vem com vários coletores habilitados por padrão:
 --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
 ```
 
-## 🎯 Métricas Críticas para Rocket Pool
+## Métricas Críticas para Rocket Pool
 
 ### Para Validação
 

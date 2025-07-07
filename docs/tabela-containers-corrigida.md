@@ -1,6 +1,6 @@
-# ✅ Correção da Formatação da Tabela de Containers
+# Correção da Formatação da Tabela de Containers
 
-## 🎯 Problema Identificado
+## Problema Identificado
 
 **Antes**:
 ```
@@ -31,7 +31,7 @@ lighthouse                298.4MiB / 3.828GiB   4.73%                           
 - Uso de `xargs` para remover espaços extras dos valores
 - Formatação consistente com `printf`
 
-## 🎯 Resultado Final
+## Resultado Final
 
 **Depois**:
 ```
@@ -45,7 +45,7 @@ grafana-holesky           137.7MiB / 3.828GiB  0.09%    Running
 node-exporter-holesky     12.52MiB / 3.828GiB  0.00%    Running 
 ```
 
-## ✅ Melhorias Aplicadas
+## Melhorias Aplicadas
 
 1. **Espaçamento Uniforme**: Todas as colunas alinhadas corretamente
 2. **Texto Limpo**: Sem espaços extras ou formatação irregular

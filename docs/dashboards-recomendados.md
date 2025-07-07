@@ -2,7 +2,7 @@
 
 Com base na análise dos dashboards disponíveis no projeto [eth-docker](https://github.com/ethstaker/eth-docker), recomendo os seguintes dashboards para o seu ambiente Rocket Pool Holesky:
 
-## 📊 Dashboards Essenciais
+## Dashboards Essenciais
 
 ### 1. Lighthouse (Consensus Client)
 
@@ -56,7 +56,7 @@ Para o Geth (seu execution client):
 - **Descrição**: Métricas adicionais do Ethereum
 - **Métricas**: Dados da rede, validadores, rewards
 
-## 🔧 Como Importar os Dashboards
+## Como Importar os Dashboards
 
 ### Método 1: Import Manual via Grafana UI
 
@@ -136,7 +136,7 @@ grafana:
     - ./grafana/provisioning:/etc/grafana/provisioning
 ```
 
-## 🎯 Prioridades de Implementação
+## Prioridades de Implementação
 
 ### Fase 1 (Críticos)
 
@@ -155,7 +155,7 @@ grafana:
 1. **Lighthouse Validator Monitor** - Monitoramento avançado
 2. **Ethereum Metrics Exporter** - Métricas adicionais da rede
 
-## 🔍 Dashboards Específicos para Rocket Pool
+## Dashboards Específicos para Rocket Pool
 
 ### Rocket Pool Node Dashboard
 

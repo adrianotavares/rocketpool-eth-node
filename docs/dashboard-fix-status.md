@@ -1,8 +1,8 @@
-# ✅ CORREÇÃO DE DASHBOARDS GRAFANA - RESUMO RÁPIDO
+# CORREÇÃO DE DASHBOARDS GRAFANA - RESUMO RÁPIDO
 
-## 🎯 Status Atual (06/07/2025 - 20:18)
+## Status Atual (06/07/2025 - 20:18)
 
-### ✅ Correções Aplicadas
+### Correções Aplicadas
 
 - **Prometheus**: Configuração atualizada (geth:6060, lighthouse:5054)
 - **Dashboards**: Todos os arquivos JSON corrigidos (11 arquivos)
@@ -10,7 +10,7 @@
 - **Backups**: Criados com extensão .backup-containers
 - **Monitor**: CPU Load Average e containers corrigidos
 
-### 📊 Status dos Serviços
+### Status dos Serviços
 
 - **✅ Geth**: Sincronizando 84.95% (ETA: ~1h7m)
 - **⏳ Lighthouse**: Aguardando Geth sincronizar completamente
@@ -18,7 +18,7 @@
 - **✅ Grafana**: Executando (<http://localhost:3000>)
 - **✅ Monitor**: CPU Load Average funcionando corretamente
 
-### 🔧 Jobs do Prometheus Detectados
+### Jobs do Prometheus Detectados
 
 - **✅ geth-holesky**: Coletando métricas (geth:6060)
 - **⏳ lighthouse-holesky**: Connection refused (esperado - Geth não sincronizado)
@@ -35,7 +35,7 @@
 - **✅ Tabela formatada**: Saída organizada e legível
 - docker ❌ (opcional)
 
-## 🎯 Próximos Passos
+## Próximos Passos
 
 ### 1. Aguardar Lighthouse (5-10 min)
 
@@ -71,7 +71,7 @@ curl -s localhost:9090/targets | grep "geth\|lighthouse"
 ./monitor-holesky.sh watch
 ```
 
-## ✅ Problema Resolvido
+## Problema Resolvido
 
 Os dashboards do Grafana foram corrigidos para usar os novos nomes dos containers. Assim que o Lighthouse terminar de inicializar (está baixando 180s timeout), todas as métricas estarão disponíveis.
 
