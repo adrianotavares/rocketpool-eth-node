@@ -92,6 +92,171 @@ check_data_directories() {
     echo
 }
 
+check_lighthouse_sync() {
+    echo -e "${CYAN}STATUS DA SINCRONIZAÇÃO DO LIGHTHOUSE (BEACON CHAIN)${NC}"
+    echo "======================================================"
+
+    # Verificar se o container do Lighthouse está executando
+    if ! docker ps --format "{{.Names}}" | grep -q "lighthouse"; then
+        log_warning "Container do Lighthouse não está em execução."
+        echo
+        return
+    fi
+
+    # Faz a chamada para a API de syncing do Lighthouse
+    # Usamos -s para modo silencioso e -m 10 para um timeout de 10 segundos
+    SYNC_DATA=$(curl -s -m 10 http://localhost:5052/eth/v1/node/syncing)
+
+    # Verificar se obtivemos uma resposta válida
+    if [ -z "$SYNC_DATA" ]; then
+        log_warning "Não foi possível obter dados de sincronização do Lighthouse."
+        # Verificar se o endpoint está acessível
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5052/eth/v1/node/syncing)
+        if [ "$HTTP_STATUS" -eq 200 ]; then
+            log_success "Lighthouse Beacon Chain está 100% sincronizado."
+        else
+            log_error "Falha ao contatar o endpoint de sincronização do Lighthouse (HTTP Status: $HTTP_STATUS)."
+        fi
+        echo
+        return
+    fi
+
+    # Verificar se o Lighthouse está sincronizado
+    IS_SYNCING=$(echo "$SYNC_DATA" | jq -r '.data.is_syncing // "unknown"')
+    if [ "$IS_SYNCING" = "false" ]; then
+        log_success "Lighthouse Beacon Chain está 100% sincronizado."
+        echo
+        return
+    fi
+
+    # Extrair dados usando jq
+    HEAD_SLOT=$(echo "$SYNC_DATA" | jq -r '.data.head_slot // "0"')
+    SYNC_DISTANCE=$(echo "$SYNC_DATA" | jq -r '.data.sync_distance // "0"')
+    
+    # Se sync_distance não estiver disponível, tentar o campo sync_distance_slots
+    if [ "$SYNC_DISTANCE" = "0" ] || [ "$SYNC_DISTANCE" = "null" ]; then
+        SYNC_DISTANCE=$(echo "$SYNC_DATA" | jq -r '.data.sync_distance_slots // "0"')
+    fi
+
+    # Debug - mostrar os valores extraídos
+    log_info "Dados brutos: head_slot=$HEAD_SLOT, sync_distance=$SYNC_DISTANCE"
+
+    # Verificar se os dados são válidos
+    if ! [[ "$HEAD_SLOT" =~ ^[0-9]+$ ]] || ! [[ "$SYNC_DISTANCE" =~ ^[0-9]+$ ]]; then
+        log_warning "Dados inválidos recebidos do Lighthouse. Formato da resposta:"
+        echo "$SYNC_DATA" | jq '.'
+        echo
+        return
+    fi
+
+    # Se já estiver sincronizado
+    if [ "$SYNC_DISTANCE" -eq 0 ]; then
+        log_success "Lighthouse Beacon Chain está 100% sincronizado."
+        echo
+        return
+    fi
+
+    # O slot de destino é o slot atual mais a distância
+    TARGET_SLOT=$((HEAD_SLOT + SYNC_DISTANCE))
+
+    # Evitar divisão por zero se o target_slot for 0
+    if [ "$TARGET_SLOT" -eq 0 ]; then
+        log_warning "Slot de destino é 0, não é possível calcular o progresso."
+        echo
+        return
+    fi
+
+    # Salvar o timestamp e o head_slot atual para cálculo da velocidade
+    TEMP_FILE="/tmp/lighthouse_sync_progress"
+    CURRENT_TIME=$(date +%s)
+
+    # Calcula o percentual
+    # Usamos `bc` para cálculos com ponto flutuante
+    if ! command -v bc &> /dev/null; then
+        # Fallback para cálculo aproximado sem bc
+        PERCENTAGE=$(awk "BEGIN {print ($HEAD_SLOT / $TARGET_SLOT) * 100}")
+        PERCENTAGE_FORMATTED=$(printf "%.2f" $PERCENTAGE)
+    else
+        PERCENTAGE=$(echo "scale=4; ($HEAD_SLOT / $TARGET_SLOT) * 100" | bc)
+        PERCENTAGE_FORMATTED=$(printf "%.2f" $PERCENTAGE)
+    fi
+
+    # Estimativa de tempo (ETA)
+    ETA_STRING="Calculando..."
+    SPEED_INFO=""
+    
+    # Calculamos o ETA baseado em uma estimativa padrão se não houver arquivo
+    # ou baseado nos dados anteriores se o arquivo existir
+    
+    # Taxa média de slots por segundo na rede Ethereum (12 segundos por slot em média)
+    DEFAULT_SLOTS_PER_SEC=0.083
+    SLOTS_PER_SEC=$DEFAULT_SLOTS_PER_SEC
+    
+    if [ -f "$TEMP_FILE" ]; then
+        # Ler dados anteriores
+        if read -r PREV_TIME PREV_SLOT < "$TEMP_FILE"; then
+            # Calcular a velocidade de sincronização (slots por segundo)
+            TIME_DIFF=$((CURRENT_TIME - PREV_TIME))
+            
+            # Se passou tempo suficiente e os slots aumentaram, calcular a velocidade real
+            if [ "$TIME_DIFF" -gt 30 ]; then  # Reduzido para 30 segundos para cálculo mais rápido
+                SLOT_DIFF=$((HEAD_SLOT - PREV_SLOT))
+                
+                if [ "$SLOT_DIFF" -gt 0 ] && [ "$TIME_DIFF" -gt 0 ]; then
+                    # Slots por segundo
+                    if command -v bc &> /dev/null; then
+                        SLOTS_PER_SEC=$(echo "scale=6; $SLOT_DIFF / $TIME_DIFF" | bc)
+                    else
+                        SLOTS_PER_SEC=$(awk "BEGIN {print $SLOT_DIFF / $TIME_DIFF}")
+                    fi
+                    
+                    # Verificar se a taxa está dentro de limites razoáveis (0.01 a 100 slots/segundo)
+                    # Se for muito baixa ou alta, usar o valor padrão
+                    if (( $(echo "$SLOTS_PER_SEC < 0.01" | bc -l) )) || (( $(echo "$SLOTS_PER_SEC > 100" | bc -l) )); then
+                        log_warning "Taxa de sincronização fora do intervalo normal: $SLOTS_PER_SEC slots/segundo, usando estimativa padrão"
+                        SLOTS_PER_SEC=$DEFAULT_SLOTS_PER_SEC
+                    fi
+                fi
+            fi
+        fi
+    fi
+    
+    # Calcular ETA com base na taxa de slots por segundo
+    if command -v bc &> /dev/null; then
+        ETA_SECONDS=$(echo "scale=0; $SYNC_DISTANCE / $SLOTS_PER_SEC" | bc)
+    else
+        ETA_SECONDS=$(awk "BEGIN {print int($SYNC_DISTANCE / $SLOTS_PER_SEC)}")
+    fi
+    
+    # Converter para formato legível
+    ETA_DAYS=$((ETA_SECONDS / 86400))
+    ETA_HOURS=$(( (ETA_SECONDS % 86400) / 3600 ))
+    ETA_MINUTES=$(( (ETA_SECONDS % 3600) / 60 ))
+    
+    # Construir string de ETA
+    ETA_STRING=""
+    if [ "$ETA_DAYS" -gt 0 ]; then
+        ETA_STRING="${ETA_DAYS}d "
+    fi
+    if [ "$ETA_HOURS" -gt 0 ] || [ "$ETA_DAYS" -gt 0 ]; then
+        ETA_STRING="${ETA_STRING}${ETA_HOURS}h "
+    fi
+    ETA_STRING="${ETA_STRING}${ETA_MINUTES}m"
+    
+    SPEED_INFO="Velocidade: $(printf "%.2f" $SLOTS_PER_SEC) slots/segundo"
+    
+    # Salvar dados atuais para próxima execução
+    echo "$CURRENT_TIME $HEAD_SLOT" > "$TEMP_FILE"
+    
+    # Exibir as informações
+    log_info "Progresso da sincronização: ${PERCENTAGE_FORMATTED}%"
+    log_info "Slot Atual: $HEAD_SLOT / $TARGET_SLOT"
+    log_info "Distância: $SYNC_DISTANCE slots restantes"
+    [ -n "$SPEED_INFO" ] && log_info "$SPEED_INFO"
+    log_info "ETA: $ETA_STRING"
+    echo
+}
+
 check_docker_containers() {
     echo -e "${CYAN}STATUS DOS CONTAINERS${NC}"
     echo "==========================="
@@ -549,6 +714,7 @@ watch_mode() {
         check_data_directories
         check_docker_containers
         check_sync_status
+        check_lighthouse_sync
         check_rocketpool_status
         check_system_resources
         check_network_connectivity
@@ -578,6 +744,7 @@ main() {
         "sync"|"-s")
             print_header
             check_sync_status
+            check_lighthouse_sync
             ;;
         "rocketpool"|"-rp")
             print_header
@@ -606,6 +773,7 @@ main() {
             check_data_directories
             check_docker_containers
             check_sync_status
+            check_lighthouse_sync
             check_rocketpool_status
             check_system_resources
             check_network_connectivity
