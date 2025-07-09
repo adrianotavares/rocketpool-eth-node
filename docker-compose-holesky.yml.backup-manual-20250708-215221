@@ -111,9 +111,14 @@ services:
       --checkpoint-sync-url=https://checkpoint-sync.holesky.ethpandaops.io
       --checkpoint-sync-url-timeout=600
       --target-peers=25
+      --discovery-address=0.0.0.0
+      --libp2p-addresses=/ip4/0.0.0.0/tcp/9000
+      --libp2p-addresses=/ip4/0.0.0.0/udp/9000
+      --enr-address=104.28.63.184
       --enr-tcp-port=9000
       --enr-udp-port=9000
-      --subscribe-all-subnets
+      --subscribe-all-subnets=true
+      --import-all-attestations=true
     networks:
       - holesky-network
     logging:

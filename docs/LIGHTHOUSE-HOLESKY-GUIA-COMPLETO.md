@@ -675,155 +675,250 @@ docker logs lighthouse 2>&1 | grep -i "peer\|connection"
 
 3. **Aguardar descoberta natural** (15-30 minutos)
 
-#### 6. Database corrupted ou "Failed to open database"
+### 🔍 Análise Detalhada: Baixa Contagem de Peers no Lighthouse
 
-**Causa**: Corrupção de dados ou shutdown impróprio.
+#### Situação Atual
 
-**Diagnóstico**:
+- **Peers conectados**: 0-1 (oscilando constantemente)
+- **Peers descobertos**: 233 total
+- **Estado dos peers**: 233 "disconnected", 0 "connected"
+- **Mensagens frequentes**: "Low peer count" e "Backfill sync paused: insufficient_synced_peers"
+- **Portas P2P**: TCP/UDP 9000 fechadas externamente
+- **UPnP**: Não suportado pelo gateway
 
-```bash
-# Verificar logs de erro
-docker logs lighthouse 2>&1 | grep -i "database\|corrupt\|failed"
+#### Causas Identificadas
 
-# Verificar tamanho e integridade dos dados
-du -sh consensus-data-holesky/beacon/
-ls -la consensus-data-holesky/beacon/
+1. **Limitação de Recursos da Testnet Holesky**
+   - Holesky é uma testnet com menor número de validadores ativos
+   - Menos peers disponíveis comparado à mainnet
+   - Peers frequentemente instáveis ou temporários
+
+2. **Problemas de Conectividade de Rede**
+   - **UPnP não suportado**: Gateway não mapeia portas automaticamente
+   - **Portas P2P fechadas**: TCP/UDP 9000 não acessíveis externamente
+   - **NAT traversal**: Dificuldade para peers externos se conectarem
+   - **Firewall**: Possível bloqueio de portas P2P
+
+3. **Configuração Subótima de Discovery**
+   - Sem bootstrap nodes específicos da Holesky
+   - Dependência apenas do discovery automático
+   - Ausência de peers estáticos/confiáveis
+
+4. **Timing de Sincronização**
+   - Peers desconectam após compartilharem dados necessários
+   - Nó já sincronizado recebe menos conexões ativas
+   - Comportamento normal após sincronização completa
+
+#### Impactos no Sistema
+
+**Funcionais (Baixo Impacto)**:
+
+- ✅ Sincronização mantida (usando checkpoint sync)
+- ✅ Consensus participando normalmente
+- ✅ Blocos sendo processados corretamente
+- ⚠️ Backfill sync pausado ocasionalmente
+
+**Operacionais (Médio Impacto)**:
+
+- ⚠️ Redundância reduzida (dependência de poucos peers)
+- ⚠️ Logs com warnings constantes
+- ⚠️ Menor resiliência a desconexões
+
+#### Melhorias Propostas (Sem Modificação de Código)
+
+##### 1. **Configuração de Rede Otimizada**
+
+```yaml
+# Adicionar ao docker-compose-holesky.yml
+lighthouse:
+  # ...configurações existentes...
+  command: >
+    lighthouse bn
+    --network=holesky
+    --datadir=/root/.lighthouse
+    --http
+    --http-address=0.0.0.0
+    --http-port=5052
+    --execution-endpoint=http://geth:8551
+    --execution-jwt=/secrets/jwtsecret
+    --metrics
+    --metrics-address=0.0.0.0
+    --metrics-port=5054
+    --port=9000
+    --discovery-port=9000
+    --block-cache-size=10
+    --historic-state-cache-size=4
+    --auto-compact-db=true
+    --checkpoint-sync-url=https://checkpoint-sync.holesky.ethpandaops.io
+    --checkpoint-sync-url-timeout=600
+    # MELHORIAS DE PEER DISCOVERY
+    --target-peers=25                    # Reduzir de 80 para 25 (realista para testnet)
+    --enr-address=<SEU_IP_PUBLICO>      # Configurar IP público se disponível
+    --enr-udp-port=9000                 # Configurar porta UDP explicitamente
+    --enr-tcp-port=9000                 # Configurar porta TCP explicitamente
+    --boot-nodes=<BOOTSTRAP_NODES>      # Adicionar bootstrap nodes confiáveis
+    --libp2p-addresses=/ip4/0.0.0.0/tcp/9000  # Bind explícito
+    --discovery-address=0.0.0.0        # Discovery em todas as interfaces
+    --trusted-peers=<PEERS_CONFIAVEIS>  # Peers sempre mantidos conectados
 ```
 
-**Soluções**:
+##### 2. **Configuração de Firewall e Rede**
 
 ```bash
-# Solução 1: Limpeza completa (mais segura)
-docker-compose -f docker-compose-holesky.yml stop lighthouse
-rm -rf consensus-data-holesky/beacon/chain_db
-rm -rf consensus-data-holesky/beacon/freezer_db
-docker-compose -f docker-compose-holesky.yml up -d lighthouse
-
-# Solução 2: Backup e restore
-cp -r consensus-data-holesky/beacon consensus-data-holesky/beacon.backup
-# Seguir processo de limpeza acima
-```
-
-#### 7. "Finalized Block Count is Zero"
-
-**Causa**: Normal durante sincronização inicial.
-
-**Explicação**: Finalização requer:
-
-- ✅ Execution client completamente sincronizado
-- ✅ Consensus client completamente sincronizado
-- ✅ Participação ativa de validadores
-- ✅ Consenso da rede (2/3 dos validadores)
-
-**Monitoramento**:
-
-```bash
-# Verificar se ainda está sincronizando
-curl -s http://localhost:5052/eth/v1/node/syncing | jq '.data.is_syncing'
-
-# Verificar distância de sincronização
-curl -s http://localhost:5052/eth/v1/node/syncing | jq '.data.sync_distance'
-
-# Verificar finalização quando sincronizado
-curl -s http://localhost:5052/eth/v1/beacon/states/head/finality_checkpoints | jq
-```
-
-### � Logs Importantes e Interpretação
-
-#### ✅ Logs de Sucesso
-
-```bash
-# Lighthouse iniciou com sucesso
-INFO Starting checkpoint sync
-INFO Downloaded finalized state
-INFO Downloaded finalized block
-INFO Block production enabled
-INFO Synced slot: XXXX
-
-# Geth conectou com sucesso
-INFO Forkchoice requested
-INFO Forkchoice applied
-INFO Imported beacon chain segment
-```
-
-#### ⚠️ Logs de Atenção (Normais)
-
-```bash
-# Warnings que podem ser ignorados
-WARN Low peer count                    # Normal durante inicialização
-WARN Execution endpoint is not synced  # Normal durante sync inicial
-WARN Remote BN does not support EIP-4881  # Fallback automático
-WARN Peer disconnected                 # Rotatividade normal de peers
-```
-
-#### ❌ Logs de Erro (Requerem Ação)
-
-```bash
-# Erros que precisam ser investigados
-ERROR Failed to start beacon node
-ERROR Error updating deposit contract cache
-CRIT Failed to download genesis state
-ERROR Database corruption detected
-ERROR JWT authentication failed
-ERROR Port already in use
-```
-
-### Ferramentas de Diagnóstico
-
-#### Script de Diagnóstico Completo
-
-```bash
+# Script de configuração de rede
 #!/bin/bash
-# diagnose-lighthouse.sh
 
-echo "=== Diagnóstico Lighthouse Holesky ==="
-echo "Timestamp: $(date)"
-echo ""
+# Verificar se as portas estão abertas
+sudo ufw status
+sudo ufw allow 9000/tcp
+sudo ufw allow 9000/udp
 
-# 1. Status dos containers
-echo "1. STATUS DOS CONTAINERS:"
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "(geth|lighthouse)"
-echo ""
+# Verificar conectividade externa
+nc -zv <IP_EXTERNO> 9000
 
-# 2. Uso de recursos
-echo "2. USO DE RECURSOS:"
-docker stats lighthouse geth --no-stream
-echo ""
+# DESCOBERTO: Configuração atual do seu sistema
+# IP Local: 192.168.18.98
+# Gateway: 192.168.18.1
+# Status UDP: ✅ Funciona localmente, ❌ Bloqueado externamente
+# UPnP: ❌ Não suportado pelo gateway
 
-# 3. Conectividade
-echo "3. CONECTIVIDADE:"
-echo "Geth RPC:"
-curl -s -X POST -H "Content-Type: application/json" \
-  --data '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' \
-  http://localhost:8545 | jq -r '.result // "Erro"'
-
-echo "Lighthouse API:"
-curl -s http://localhost:5052/eth/v1/node/health 2>/dev/null || echo "Erro"
-echo ""
-
-# 4. Sincronização
-echo "4. STATUS DE SINCRONIZAÇÃO:"
-echo "Geth:"
-curl -s -X POST -H "Content-Type: application/json" \
-  --data '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}' \
-  http://localhost:8545 | jq -r '.result // "Sincronizado"'
-
-echo "Lighthouse:"
-curl -s http://localhost:5052/eth/v1/node/syncing | jq -r '.data.is_syncing // "Erro"'
-echo ""
-
-# 5. Logs recentes
-echo "5. LOGS RECENTES:"
-echo "Lighthouse (últimas 5 linhas):"
-docker logs lighthouse --tail 5
-echo ""
-
-echo "Geth (últimas 5 linhas):"
-docker logs geth --tail 5
-echo ""
-
-echo "=== Fim do Diagnóstico ==="
+# Configurar port forwarding no router (OBRIGATÓRIO)
+# Acesse: http://192.168.18.1
+# Configurar: Porta 9000 TCP/UDP -> 192.168.18.98
+# Consulte: docs/ROUTER-PORT-FORWARDING-GUIDE.md
 ```
+
+##### 3. **Bootstrap Nodes Específicos para Holesky**
+
+```yaml
+# Adicionar bootstrap nodes conhecidos da Holesky
+--boot-nodes=enr:-Iq4QMCTfIMXnow27baRUb35Q8aiFDWs2FBFwvvCCJUE8K3sOJffrPJWHJLGMv8WxbzYhyKJ_uIU2X7kHRSRnVkmZ2mAgAOAg2V0aMfGhChI5k4kgmlkgnY0gmlwhHAQAAAAAYJpZIJ2NIJpcIQAAAAAA4lzZWNwMjU2azGhAuBGGUYVqrDT1MaOu_sxlgQJBKGALvFKV8YT9X6F8CRAIiHN5bmNuZXRz0AAAg3RjcIIjKA,enr:-Ly4QMCTfIMXnow27baRUb35Q8aiFDWs2FBFwvvCCJUE8K3sOJffrPJWHJLGMv8WxbzYhyKJ_uIU2X7kHRSRnVkmZ2mAgAOAg2V0aMfGhChI5k4kgmlkgnY0gmlwhHAQAAAAAYJpZIJ2NIJpcIQAAAAAA4lzZWNwMjU2azGhAuBGGUYVqrDT1MaOu_sxlgQJBKGALvFKV8YT9X6F8CRAIiHN5bmNuZXRz0AAAg3RjcIIjKA
+```
+
+##### 4. **Monitoramento Específico de Peers**
+
+```bash
+# Script de monitoramento específico - peers-monitor.sh
+#!/bin/bash
+
+echo "=== LIGHTHOUSE PEER MONITORING ==="
+echo "Data: $(date)"
+echo
+
+# Contagem de peers
+echo "📊 PEER COUNT:"
+curl -s http://localhost:5052/eth/v1/node/peer_count | jq '
+  .data | 
+  "Connected: \(.connected) | Connecting: \(.connecting) | Disconnected: \(.disconnected)"'
+
+echo
+
+# Peers conectados detalhados
+echo "🔗 CONNECTED PEERS:"
+curl -s http://localhost:5052/eth/v1/node/peers | jq -r '
+  .data[] | 
+  select(.state == "connected") | 
+  "ID: \(.peer_id[0:20])... | Direction: \(.direction) | IP: \(.last_seen_p2p_address)"'
+
+echo
+
+# Status de sincronização
+echo "⚡ SYNC STATUS:"
+curl -s http://localhost:5052/eth/v1/node/syncing | jq '.data'
+
+echo
+
+# Logs recentes de peers
+echo "📋 RECENT PEER LOGS:"
+docker logs lighthouse --tail=5 2>&1 | grep -i "peer\|connection" | tail -5
+
+echo "================================="
+```
+
+##### 5. **Configuração de Trusted Peers**
+
+```bash
+# Encontrar peers confiáveis da Holesky
+curl -s "https://api.holesky.ethpandaops.io/api/v1/clients/lighthouse/peers" | jq -r '.[] | select(.status == "online") | .enr' | head -5
+
+# Adicionar ao docker-compose.yml
+--trusted-peers=16Uiu2HAm9Yxnv4XcVh5pu18TJLXgETgWq7jVx41wfqyHpdt6PQLV,16Uiu2HAm8KRH7rVRLj3fAkn5wdZuNi6DgWxFjRGQ4pKtQg7YGF7Q
+```
+
+##### 6. **Otimização de Discovery**
+
+```yaml
+# Configurações específicas para discovery
+--discovery-port=9000
+--enr-udp-port=9000
+--enr-tcp-port=9000
+--discovery-address=0.0.0.0
+--libp2p-addresses=/ip4/0.0.0.0/tcp/9000
+--libp2p-addresses=/ip4/0.0.0.0/udp/9000
+--subscribe-all-subnets=true  # Melhor descoberta de peers
+--import-all-attestations=true  # Processar mais atestações
+--enr-tcp-port` e `--enr-udp-port` explícitos
+```
+
+#### Verificação da Eficácia
+
+**Métricas para Monitorar**:
+
+1. **Contagem de peers**: Objetivo 10-25 conectados
+2. **Estabilidade**: Peers mantidos por >30 minutos
+3. **Diversidade**: Peers de diferentes IPs/regiões
+4. **Backfill sync**: Redução de pausas por "insufficient_synced_peers"
+
+**Comandos de Verificação**:
+
+```bash
+# Monitoramento contínuo
+watch -n 30 'curl -s http://localhost:5052/eth/v1/node/peer_count | jq'
+
+# Verificar estabilidade de peers
+for i in {1..10}; do
+  curl -s http://localhost:5052/eth/v1/node/peers | jq '.data[] | select(.state == "connected") | .peer_id' | wc -l
+  sleep 60
+done
+
+# Verificar diversidade geográfica
+curl -s http://localhost:5052/eth/v1/node/peers | jq -r '.data[] | select(.state == "connected") | .last_seen_p2p_address' | cut -d'/' -f3 | sort | uniq
+```
+
+#### Expectativas Realistas
+
+**Para Testnet Holesky**:
+
+- ✅ **5-15 peers conectados**: Adequado para testnet
+- ✅ **Sincronização mantida**: Prioridade principal
+- ✅ **Warnings ocasionais**: Normais em testnet
+- ❌ **50+ peers**: Irrealista para Holesky
+
+**Comparação com Mainnet**:
+
+- Mainnet: 50-100 peers típicos
+- Holesky: 5-25 peers típicos
+- Diferença: Menor densidade de nós
+
+#### Implementação Gradual
+
+**Fase 1** (Imediato):
+
+- Ajustar `--target-peers=25`
+- Configurar portas explicitamente
+- Adicionar bootstrap nodes
+
+**Fase 2** (Médio prazo):
+
+- Configurar firewall/port forwarding
+- Implementar monitoramento específico
+- Adicionar trusted peers
+
+**Fase 3** (Longo prazo):
+
+- Otimizar discovery settings
+- Implementar alertas inteligentes
+- Documentar padrões observados
 
 ---
 
@@ -1165,421 +1260,6 @@ tar -czf "lighthouse-config-$(date +%Y%m%d-%H%M%S).tar.gz" \
 docker logs lighthouse --tail 1000 > lighthouse-recent.log
 docker container prune -f
 docker image prune -f
-```
-
----
-
-## Status Final e Checklist
-
-### Status Consolidado
-
-**Data da Implementação**: 8 de julho de 2025  
-**Status Final**: ✅ **COMPLETAMENTE OTIMIZADO E OPERACIONAL**
-
-### Checklist de Implementação
-
-#### ✅ Problemas Resolvidos
-
-- [x] **Deadlock Geth-Lighthouse**: Resolvido permanentemente
-- [x] **DNS Discovery Error**: Configuração corrigida
-- [x] **Dependência Circular**: Removida com sucesso
-- [x] **Checkpoint Sync**: Implementado e validado
-- [x] **Performance**: Otimizada significativamente
-- [x] **Monitoramento**: Completamente funcional
-
-#### ✅ Otimizações Implementadas
-
-- [x] **Block Cache**: 10 (vs padrão 5) = +100% performance
-- [x] **Historic State Cache**: 4 (vs padrão 1) = +300% performance
-- [x] **Auto Compact DB**: Habilitado = melhor uso de disco
-- [x] **Checkpoint Sync**: Configurado = sincronização 15x mais rápida
-- [x] **Extended Timeout**: 600s = maior tolerância a latência
-- [x] **Scripts de Automação**: Implementados
-- [x] **Documentação**: Consolidada em arquivo único
-
-#### ✅ Infraestrutura Estável
-
-- [x] **Todos os containers**: Funcionando corretamente
-- [x] **Geth**: Completamente sincronizado
-- [x] **Lighthouse**: Completamente sincronizado e otimizado
-- [x] **Prometheus**: Coletando métricas
-- [x] **Grafana**: Dashboards funcionais
-- [x] **Node Exporter**: Monitoramento de sistema ativo
-- [x] **Rocket Pool**: Operacional
-
-#### ✅ Automação e Manutenção
-
-- [x] **Scripts de Otimização**: Funcionais
-- [x] **Scripts de Monitoramento**: Implementados
-- [x] **Scripts de Backup**: Criados
-- [x] **Scripts de Diagnóstico**: Implementados
-- [x] **Health Checks**: Configurados
-- [x] **Rotinas de Manutenção**: Documentadas
-
-### Conquistas
-
-#### 🚀 Performance Melhorada
-
-- **Sincronização Inicial**: 80-90% mais rápida
-- **Block Processing**: 100% mais eficiente
-- **State Access**: 300% mais rápido
-- **Peer Discovery**: 60-80% mais rápido
-- **Database Operations**: Compactação automática
-
-#### 🔧 Operações Otimizadas
-
-- **Inicialização**: Sequência automatizada
-- **Monitoramento**: Dashboards completos
-- **Troubleshooting**: Guias detalhados
-- **Manutenção**: Rotinas estabelecidas
-- **Backup/Restore**: Processos automatizados
-
-### 🔮 Próximos Passos Opcionais
-
-#### Melhorias Futuras (Não Urgentes)
-
-1. **Implementar Alertas**: Configurar Alertmanager
-2. **Otimizar Recursos**: Tuning fino baseado em métricas
-3. **Automatizar Backups**: Cron jobs para backup automático
-4. **Implementar Load Balancing**: Para alta disponibilidade
-5. **Migrar para Mainnet**: Quando apropriado
-
-#### Monitoramento Contínuo
-
-- **Verificar logs**: Diariamente
-- **Monitorar métricas**: Através do Grafana
-- **Avaliar performance**: Semanalmente
-- **Atualizar containers**: Mensalmente
-- **Revisar configurações**: Trimestralmente
-
----
-
-## 📚 Referências e Recursos
-
-### 📖 Documentação Oficial
-
-- [Lighthouse Book](https://lighthouse-book.sigmaprime.io/) - Documentação completa
-- [Holesky Testnet](https://holesky.ethpandaops.io/) - Especificações da testnet
-- [Rocket Pool Docs](https://docs.rocketpool.net/) - Guia do Rocket Pool
-- [Ethereum.org](https://ethereum.org/developers/docs/nodes-and-clients/) - Visão geral dos clients
-
-### Ferramentas e Utilitários
-
-- [Docker Documentation](https://docs.docker.com/) - Referência do Docker
-- [Prometheus](https://prometheus.io/docs/) - Monitoramento
-- [Grafana](https://grafana.com/docs/) - Visualização
-- [jq](https://stedolan.github.io/jq/) - Processamento JSON
-
-### 🌐 Endpoints e APIs
-
-- **Checkpoint Sync**: `https://checkpoint-sync.holesky.ethpandaops.io`
-- **Backup Checkpoint**: `https://holesky.beaconstate.info`
-- **Holesky Explorer**: `https://holesky.etherscan.io`
-- **Beacon Chain Explorer**: `https://holesky.beaconcha.in`
-
-### Métricas e Monitoramento
-
-- **Lighthouse Metrics**: `http://localhost:5054/metrics`
-- **Geth Metrics**: `http://localhost:6060/debug/metrics/prometheus`
-- **Prometheus**: `http://localhost:9090`
-- **Grafana**: `http://localhost:3000`
-
----
-
-## 🏆 Conclusão
-
-O ambiente Lighthouse + Holesky está **completamente otimizado e operacional**!
-
-Este guia consolidado elimina a necessidade de consultar múltiplos arquivos, fornecendo um documento único e abrangente que cobre:
-
-- ✅ **Configuração otimizada** com melhorias de performance significativas
-- ✅ **Solução definitiva** para o deadlock Geth-Lighthouse
-- ✅ **Troubleshooting completo** para todos os problemas conhecidos
-- ✅ **Monitoramento avançado** com métricas detalhadas
-- ✅ **Automação total** através de scripts especializados
-- ✅ **Procedimentos de manutenção** para operação contínua
-
-🎯 O ambiente está pronto para produção na testnet Holesky!
-
----
-
-**📄 Documento Consolidado Final**  
-**Versão**: 2.0 - Consolidada  
-**Última Atualização**: 8 de julho de 2025  
-**Status**: ✅ Completo e Operacional
-
-   docker-compose -f docker-compose-holesky.yml up -d geth
-
-## 2. Aguardar 2-3 minutos
-
-   sleep 180
-
-## 3. Iniciar Lighthouse
-
-   docker-compose -f docker-compose-holesky.yml up -d lighthouse
-
-## 4. Iniciar demais serviços
-
-   docker-compose -f docker-compose-holesky.yml up -d
-
-### Genesis Sync vs Checkpoint Sync
-
-#### Checkpoint Sync (Recomendado) ✅
-
-**Vantagens**:
-
-- ⚡ **Velocidade**: 5-15 minutos vs várias horas
-- 🎯 **Precisão**: Sincroniza com estado atual da rede
-- 💾 **Eficiência**: Menor uso de recursos
-
-**Configuração**:
-
-```yaml
---checkpoint-sync-url=https://checkpoint-sync.holesky.ethpandaops.io
---checkpoint-sync-url-timeout=600
-```
-
-**Endpoints Testados**:
-
-- ✅ `https://checkpoint-sync.holesky.ethpandaops.io` (Recomendado)
-- ✅ `https://holesky.beaconstate.info`
-- ❌ `https://ethstaker.cc/holesky` (Redirect)
-
-#### Genesis Sync (Backup)
-
-**Quando usar**: Apenas se checkpoint sync falhar repetidamente.
-
-**Configuração**:
-
-```yaml
---allow-insecure-genesis-sync
-# Remover --checkpoint-sync-url
-```
-
-**Desvantagens**:
-
-- 🐌 **Lento**: 3-6 horas para testnets
-- 📡 **Dependente**: Requer genesis state server ativo
-
----
-
-## Monitoramento
-
-### Comandos Essenciais
-
-```bash
-# Status dos containers
-docker ps --format "table {{.Names}}\t{{.Status}}"
-
-# Progresso do Geth
-docker logs geth --tail 5
-
-# Progresso do Lighthouse
-docker logs lighthouse --tail 5
-
-# Monitoramento contínuo
-docker logs lighthouse -f
-```
-
-### APIs de Health Check
-
-```bash
-# Geth RPC
-curl -X POST -H "Content-Type: application/json" \
-  --data '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}' \
-  http://localhost:8545
-
-# Lighthouse API
-curl http://localhost:5052/eth/v1/node/syncing
-
-# Peers do Lighthouse
-curl http://localhost:5052/eth/v1/node/peers
-```
-
-### Métricas no Grafana (Resumo)
-
-Acesse: `http://localhost:3000`
-
-- **Login**: admin / admin123
-- **Dashboards**: Lighthouse + Geth disponíveis
-- **Métricas**: Disponíveis nas portas 5054 (Lighthouse) e 6060 (Geth)
-
----
-
-## 🤖 Scripts de Automação
-
-### Script de Otimização
-
-**Localização**: `scripts/optimize-lighthouse-holesky.sh`
-
-```bash
-# Executar otimização
-bash scripts/optimize-lighthouse-holesky.sh
-
-# Opções disponíveis:
-# 1. Nível 1 (Básico) - Recomendado
-# 2. Nível 2 (Intermediário)
-# 3. Nível 3 (Avançado)
-# 4. Reverter otimizações
-```
-
-### Script de Monitoramento
-
-**Localização**: `scripts/monitor-lighthouse-optimization.sh`
-
-```bash
-# Executar monitoramento
-bash scripts/monitor-lighthouse-optimization.sh
-
-# Opções disponíveis:
-# 1. Verificar Status Atual
-# 2. Monitoramento Contínuo (60s)
-# 3. Monitoramento Contínuo (30s)
-# 4. Mostrar Logs do Lighthouse
-# 5. Salvar Log Atual
-```
-
----
-
-## Troubleshooting
-
-### Problemas Comuns e Soluções
-
-#### 1. "Execution endpoint is not synced"
-
-**Causa**: Geth ainda sincronizando.
-**Solução**: Aguardar sincronização do Geth (~30-60 minutos).
-
-```bash
-# Verificar progresso do Geth
-docker logs geth --tail 5
-```
-
-#### 2. "Failed to start beacon node"
-
-**Causa**: Problema de dependência ou configuração.
-**Solução**:
-
-```bash
-# Reiniciar sequencialmente
-docker-compose -f docker-compose-holesky.yml stop
-docker-compose -f docker-compose-holesky.yml up -d geth
-sleep 120
-docker-compose -f docker-compose-holesky.yml up -d lighthouse
-```
-
-#### 3. "Remote BN does not support EIP-4881"
-
-**Causa**: Endpoint não suporta fast deposit sync.
-**Solução**: Normal, é um fallback. Ignorar.
-
-#### 4. "Low peer count"
-
-**Causa**: Lighthouse com poucos peers.
-**Solução**: Aguardar ou adicionar otimizações de rede:
-
-```yaml
---target-peers=80
---subscribe-all-subnets
-```
-
-#### 5. Database corrupted
-
-**Solução**:
-
-```bash
-# Parar serviços
-docker-compose -f docker-compose-holesky.yml stop lighthouse
-
-# Limpar database
-rm -rf consensus-data-holesky/beacon/chain_db
-rm -rf consensus-data-holesky/beacon/freezer_db
-
-# Reiniciar
-docker-compose -f docker-compose-holesky.yml up -d lighthouse
-```
-
-### Logs Importantes
-
-#### ✅ Logs de Sucesso
-
-```
-INFO Starting checkpoint sync
-INFO Downloaded finalized state
-INFO Downloaded finalized block
-INFO Block production enabled
-INFO Synced slot: XXXX
-```
-
-#### ⚠️ Logs de Atenção
-
-```
-WARN Low peer count
-WARN Execution endpoint is not synced
-WARN Remote BN does not support EIP-4881
-```
-
-#### ❌ Logs de Erro
-
-```
-ERRO Failed to start beacon node
-ERRO Error updating deposit contract cache
-CRIT Failed to download genesis state
-```
-
----
-
-## Performance e Resultados
-
-### Antes vs Depois
-
-| Métrica | Antes | Depois | Melhoria |
-|---------|-------|--------|----------|
-| Sincronização Inicial | 3-6 horas | 15-30 min | 80-90% |
-| Block Cache | 5 slots | 10 slots | +100% |
-| State Cache | 1 estado | 4 estados | +300% |
-| Compactação DB | Manual | Automática | ✅ |
-| Timeout | 180s | 600s | +233% |
-
-### Recursos do Sistema
-
-```bash
-# Monitorar uso de recursos
-docker stats lighthouse geth --no-stream
-
-# Verificar espaço em disco
-du -sh consensus-data-holesky/
-du -sh execution-data-holesky/
-```
-
----
-
-## Comandos Rápidos
-
-### Restart Completo
-
-```bash
-cd /Users/adrianotavares/dev/rocketpool-eth-node
-docker-compose -f docker-compose-holesky.yml down
-docker-compose -f docker-compose-holesky.yml up -d
-```
-
-### Restart Apenas Lighthouse
-
-```bash
-docker-compose -f docker-compose-holesky.yml restart lighthouse
-```
-
-### Verificar Status Rápido
-
-```bash
-docker ps | grep -E "(geth|lighthouse)"
-```
-
-### Backup de Configuração
-
-```bash
-cp docker-compose-holesky.yml docker-compose-holesky.yml.backup.$(date +%Y%m%d-%H%M%S)
 ```
 
 ---

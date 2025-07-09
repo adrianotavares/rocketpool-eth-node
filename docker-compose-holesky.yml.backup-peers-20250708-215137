@@ -110,10 +110,6 @@ services:
       --auto-compact-db=true
       --checkpoint-sync-url=https://checkpoint-sync.holesky.ethpandaops.io
       --checkpoint-sync-url-timeout=600
-      --target-peers=25
-      --enr-tcp-port=9000
-      --enr-udp-port=9000
-      --subscribe-all-subnets
     networks:
       - holesky-network
     logging:
