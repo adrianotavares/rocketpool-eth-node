@@ -41,18 +41,18 @@ Todos os dashboards recomendados foram baixados e configurados automaticamente:
 4. Selecione "Upload JSON file"
 5. Importe os dashboards em ordem de prioridade:
 
-**🎯 Fase 1 - Críticos:**
+🎯 Fase 1 - Críticos:
 
 - `lighthouse_summary.json` (consensus client)
 - `geth_dashboard.json` (execution client)
 - `docker_host_overview.json` (containers)
 
-**🎯 Fase 2 - Importantes:**
+🎯 Fase 2 - Importantes:
 
 - `lighthouse_validator_client.json` (validador)
 - `home_staking.json` (home staking)
 
-**🎯 Fase 3 - Avançados:**
+🎯 Fase 3 - Avançados:
 
 - `lighthouse_validator_monitor.json` (monitoramento avançado)
 - `ethereum_metrics_exporter.json` (métricas da rede)
@@ -76,7 +76,7 @@ Após importar, verificar se as métricas estão sendo coletadas:
 - **Geth**: Confirmar que as métricas estão sendo exportadas
 - **Node Exporter**: Validar coleta de métricas do sistema
 
-## 📋 Checklist de Validação
+## Checklist de Validação
 
 ### Dashboards Essenciais
 

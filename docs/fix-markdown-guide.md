@@ -81,7 +81,7 @@ Script utilitário para correção automática de problemas comuns em arquivos m
 # Scripts do Rocket Pool
 ## Scripts Disponíveis
 ### Monitoramento
-**Título em Negrito Incorreto**
+Título em Negrito Incorreto
 ```
 
 ### Depois da Correção

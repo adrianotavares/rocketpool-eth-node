@@ -124,12 +124,12 @@ grafana/provisioning/dashboards/
 
 ### Resultado no Grafana
 
-**Pasta "Ethereum" (Mainnet):**
+Pasta "Ethereum" (Mainnet):
 
 - Ethereum Node Monitoring
 - Geth Server Monitoring
 
-**Pasta "Holesky" (Testnet):**
+Pasta "Holesky" (Testnet):
 
 - Geth Holesky Testnet Monitoring  
 - Lighthouse Holesky Testnet Monitoring

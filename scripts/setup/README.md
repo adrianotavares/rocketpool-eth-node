@@ -69,7 +69,7 @@ Configuração para SSD externo
 ./scripts/monitoring/monitor-holesky.sh
 ```
 
-## 📋 Pré-requisitos
+## Pré-requisitos
 
 ### Sistema
 

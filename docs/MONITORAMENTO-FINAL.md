@@ -229,24 +229,24 @@ O sistema de monitoramento está agora completamente configurado e pronto para u
 
 ### Métricas Confirmadas
 
-**Lighthouse (Consensus Client):**
+Lighthouse (Consensus Client):
 
 - beacon_head_slot: Funcionando
 - beacon_peer_count: Disponível
 - Todas as métricas do beacon chain ativas
 
-**Sistema (Node Exporter):**
+Sistema (Node Exporter):
 
 - CPU, memória, disco, rede: Todos funcionando
 - Coleta a cada 15 segundos
 
-**Prometheus:**
+Prometheus:
 
 - Todos os targets UP
 - Coleta funcionando normalmente
 - Interface web acessível
 
-**Grafana:**
+Grafana:
 
 - Interface web funcionando
 - Datasource configurado automaticamente

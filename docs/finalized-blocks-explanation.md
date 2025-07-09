@@ -234,4 +234,4 @@ Uma vez que a sincronização seja concluída, as métricas de finalização apa
 ---
 
 *Documento criado em: 6 de julho de 2025*  
-*Atualizado: 6 de julho de 2025*
+Atualizado: 6 de julho de 2025

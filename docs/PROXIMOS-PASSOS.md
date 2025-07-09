@@ -130,34 +130,34 @@ docker exec -it rocketpool-node rocketpool api minipool status
 
 ### 5.1 Dashboards Grafana
 
-**CONFIGURAÇÃO COMPLETA:**
+CONFIGURAÇÃO COMPLETA:
 
 - **URL**: <http://localhost:3000>
 - **Login**: admin/admin (altere na primeira vez)
 - **Datasource Prometheus**: Configurado automaticamente
 - **Dashboard Ethereum**: Importado e disponível
 
-**PRIMEIRO ACESSO AO GRAFANA:**
+PRIMEIRO ACESSO AO GRAFANA:
 
 1. Acesse <http://localhost:3000>
 2. Login: `admin` / `admin`
 3. Altere a senha quando solicitado
 4. O dashboard estará disponível no menu lateral
 
-**DASHBOARD FUNCIONANDO:**
+DASHBOARD FUNCIONANDO:
 
 **Problema resolvido**: Dashboard aparece no Grafana
 **Erro de compatibilidade**: Dashboard com erro de cor - corrigido
 **Solução alternativa**: Criar dashboard manual
 
-**ACESSO AO GRAFANA:**
+ACESSO AO GRAFANA:
 
 1. Acesse <http://localhost:3000>
 2. Login: `admin` / `admin` (troque a senha)
 3. Vá em "Dashboards" ou clique no "+" no menu
 4. Selecione "Import dashboard" ou "New dashboard"
 
-**CRIAR DASHBOARD MANUAL (RECOMENDADO):**
+CRIAR DASHBOARD MANUAL (RECOMENDADO):
 
 1. No Grafana, clique em "+" e depois "Dashboard"
 2. Clique em "Add visualization"
@@ -165,14 +165,14 @@ docker exec -it rocketpool-node rocketpool api minipool status
 4. Salve o painel como "Consensus Status"
 5. Adicione mais painéis para outras métricas
 
-**MÉTRICAS PRINCIPAIS PARA ADICIONAR:**
+MÉTRICAS PRINCIPAIS PARA ADICIONAR:
 
 - `up{job="consensus-client"}` - Status do consensus
 - `up{job="execution-client"}` - Status do execution  
 - `beacon_head_slot` - Sincronização do beacon
 - `beacon_peer_count` - Peers conectados
 
-**MÉTRICAS DISPONÍVEIS NO DASHBOARD:**
+MÉTRICAS DISPONÍVEIS NO DASHBOARD:
 
 - **Consensus Client (Lighthouse)**: Beacon head slot, peers, sincronização
 - **Execution Client (Geth)**: Informações básicas do node
@@ -183,7 +183,7 @@ docker exec -it rocketpool-node rocketpool api minipool status
 
 **URL**: <http://localhost:9090>
 
-**Verificar Sincronização:**
+Verificar Sincronização:
 
 ```promql
 # Slot atual do beacon
@@ -196,7 +196,7 @@ beacon_peer_count
 up
 ```
 
-**Monitorar Sistema:**
+Monitorar Sistema:
 
 ```promql
 # CPU usage
@@ -211,7 +211,7 @@ up
 
 ### 5.3 Status Atual do Monitoramento
 
-**CONTAINERS ATIVOS:**
+CONTAINERS ATIVOS:
 
 - execution-client: UP (métricas básicas)
 - consensus-client: UP (beacon_head_slot: 12027519)
@@ -220,7 +220,7 @@ up
 - rocketpool-node: UP
 - node-exporter: UP
 
-**MÉTRICAS CONFIRMADAS:**
+MÉTRICAS CONFIRMADAS:
 
 - Lighthouse: beacon_head_slot, beacon_peer_count, etc.
 - Sistema: CPU, memória, disco, rede

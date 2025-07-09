@@ -523,7 +523,7 @@ A testnet Holesky é uma ferramenta fundamental para:
 
 ## STATUS ATUAL (Atualizado em 01/07/2025)
 
-**✅ CONFIGURAÇÃO COMPLETA E FUNCIONANDO!**
+✅ CONFIGURAÇÃO COMPLETA E FUNCIONANDO!
 
 Todos os containers da testnet Holesky estão executando corretamente:
 

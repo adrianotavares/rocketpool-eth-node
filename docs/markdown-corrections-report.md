@@ -43,7 +43,7 @@
 # Scripts do Rocket Pool Holesky
 ## Scripts Disponíveis
 ### Monitoramento
-**Mais Completo e Recomendado**
+Mais Completo e Recomendado
 ```
 
 ### Depois

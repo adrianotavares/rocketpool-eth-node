@@ -105,11 +105,13 @@ services:
       --metrics-port=5054
       --port=9000
       --discovery-port=9000
-      --checkpoint-sync-url=https://holesky.checkpoint.sigp.io
+      --block-cache-size=10
+      --historic-state-cache-size=4
+      --auto-compact-db=true
+      --checkpoint-sync-url=https://checkpoint-sync.holesky.ethpandaops.io
+      --checkpoint-sync-url-timeout=600
     networks:
       - holesky-network
-    depends_on:
-      - geth
     logging:
       driver: "json-file"
       options:

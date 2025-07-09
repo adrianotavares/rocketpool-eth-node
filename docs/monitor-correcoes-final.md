@@ -134,7 +134,7 @@ Containers em execução: 6/6
 
 ## 🏆 Resultado Final
 
-**✅ PROBLEMA COMPLETAMENTE RESOLVIDO!**
+✅ PROBLEMA COMPLETAMENTE RESOLVIDO!
 
 O monitor agora exibe:
 
@@ -147,4 +147,4 @@ O monitor agora exibe:
 
 ---
 
-*Monitor corrigido em: 06/07/2025 às 19:47*
+Monitor corrigido em: 06/07/2025 às 19:47

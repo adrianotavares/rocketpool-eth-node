@@ -63,4 +63,4 @@ node-exporter-holesky     12.52MiB / 3.828GiB  0.00%    Running
 
 ---
 
-*Correção aplicada em: 06/07/2025 às 20:15*
+Correção aplicada em: 06/07/2025 às 20:15

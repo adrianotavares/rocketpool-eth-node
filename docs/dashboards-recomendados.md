@@ -171,7 +171,7 @@ grafana:
 - **Sistema**: CPU, memória, disco, rede
 - **Rocket Pool**: Status do node, rewards, RPL staking
 
-## 📋 Checklist de Implementação
+## Checklist de Implementação
 
 - [ ] Baixar dashboards essenciais (Lighthouse + Geth)
 - [ ] Configurar data sources corretos
