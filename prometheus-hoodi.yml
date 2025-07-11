@@ -1,0 +1,61 @@
+# Prometheus Configuration for Hoodi Testnet
+# Configuração de monitoramento para testnet Hoodi (Chain ID: 560048)
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    network: 'hoodi'
+    testnet: 'true'
+
+rule_files:
+  - "alerts.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Node Exporter - Métricas do sistema
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter-hoodi:9100']
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # Geth - Execution Client
+  - job_name: 'geth'
+    static_configs:
+      - targets: ['geth-hoodi:6060']
+    scrape_interval: 10s
+    metrics_path: /debug/metrics/prometheus
+
+  # Lighthouse Beacon Node - Consensus Client
+  - job_name: 'lighthouse-bn'
+    static_configs:
+      - targets: ['lighthouse-hoodi:5054']
+    scrape_interval: 10s
+    metrics_path: /metrics
+
+  # Rocket Pool Node
+  - job_name: 'rocketpool-node'
+    static_configs:
+      - targets: ['rocketpool-node-hoodi:9102']
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # MEV-Boost
+  - job_name: 'mev-boost'
+    static_configs:
+      - targets: ['mev-boost-hoodi:18550']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s

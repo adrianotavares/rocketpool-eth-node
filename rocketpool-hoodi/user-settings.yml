@@ -1,0 +1,51 @@
+# Rocket Pool v1.16.0 - Configuração para Testnet Hoodi
+# Baseado no template oficial (user-settings.template.yml)
+# Configuração para Rocket Pool v1.16.0 em modo híbrido (Docker)
+# Testnet Hoodi (Chain ID: 560048)
+
+root:
+  # Versão do Rocket Pool
+  version: "1.16.0"
+  
+  # Rede Ethereum (testnet para Hoodi)
+  network: "testnet"
+  
+  # Modo Native (false = Docker mode, true = Native mode)
+  isNative: false
+  
+  # Modo dos clientes (external para usar nossos containers específicos)
+  executionClientMode: external    # Cliente de execução externo (Geth Hoodi)
+  consensusClientMode: external    # Cliente de consenso externo (Lighthouse Hoodi)
+
+smartnode:
+  # Configuração do Smartnode
+  network: testnet
+  
+  # Configuração de MEV-Boost
+  mevBoost:
+    enable: true
+    mode: external
+    externalUrl: http://mev-boost-hoodi:18550
+
+# Configuração do cliente de execução externo (Geth Hoodi)
+externalExecution:
+  httpUrl: http://geth-hoodi:8545     # HTTP RPC do Geth Hoodi
+  wsUrl: ws://geth-hoodi:8546         # WebSocket do Geth Hoodi
+
+# Configuração do cliente de consenso externo (Lighthouse Hoodi)
+externalLighthouse:
+  httpUrl: http://lighthouse-hoodi:5052     # HTTP API do Lighthouse Hoodi
+
+# Configurações específicas da Testnet Hoodi:
+# - Chain ID: 560048 (0x89010 em hexadecimal)
+# - Rede: Hoodi (nova geração de testnet)
+# - Genesis: 2024-05-10 12:00:00 UTC
+# - Checkpoint Sync: https://checkpoint-sync.hoodi.ethpandaops.io
+# - Explorer: https://explorer.hoodi.ethpandaops.io/
+# - ETH de teste: Disponível via faucets da EthPandaOps
+# 
+# Comandos básicos:
+# - Status: docker exec -it rocketpool-node-hoodi rocketpool node status
+# - Sync: docker exec -it rocketpool-node-hoodi rocketpool node sync
+# - Wallet: docker exec -it rocketpool-node-hoodi rocketpool wallet status
+# - Node: docker exec -it rocketpool-node-hoodi rocketpool node register

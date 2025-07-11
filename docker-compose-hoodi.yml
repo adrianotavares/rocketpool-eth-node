@@ -1,0 +1,234 @@
+# Docker Compose para Testnet Hoodi - Rocket Pool Node
+# Configuração baseada na arquitetura oficial do Rocket Pool
+# Testnet Hoodi (Chain ID: 560048) - Nova geração de testnet Ethereum
+# Utiliza containers separados para cada componente
+
+services:
+  # Rocket Pool Node (daemon principal)
+  rocketpool-node:
+    image: rocketpool/smartnode:latest
+    container_name: rocketpool-node-hoodi
+    restart: unless-stopped
+    command: ["node"]
+    ports:
+      - "8000:8000"        # API Rocket Pool
+    volumes:
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-hoodi}/.rocketpool:/.rocketpool
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - ROCKET_POOL_NETWORK=testnet  # Hoodi é considerado "testnet" no Rocket Pool
+      - NETWORK=testnet
+    networks:
+      - hoodi-network
+    depends_on:
+      - geth
+      - lighthouse
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Geth (Execution Client)
+  geth:
+    image: ethereum/client-go:latest
+    container_name: geth-hoodi
+    restart: unless-stopped
+    ports:
+      - "30304:30303/tcp"  # P2P (porta externa diferente da Holesky)
+      - "30304:30303/udp"  # P2P (porta externa diferente da Holesky)
+      - "8545:8545"        # HTTP RPC
+      - "8546:8546"        # WebSocket RPC
+      - "8551:8551"        # Auth RPC
+      - "6060:6060"        # Metrics
+    volumes:
+      - ${EXECUTION_DATA_PATH:-./execution-data-hoodi}:/root/.ethereum
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-hoodi}/secrets:/secrets:rw
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command: >
+      --hoodi
+      --datadir=/root/.ethereum/geth
+      --http
+      --http.addr=0.0.0.0
+      --http.port=8545
+      --http.api=eth,net,web3
+      --http.vhosts=*
+      --http.corsdomain=*
+      --ws
+      --ws.addr=0.0.0.0
+      --ws.port=8546
+      --ws.api=eth,net,web3
+      --ws.origins=*
+      --authrpc.addr=0.0.0.0
+      --authrpc.port=8551
+      --authrpc.jwtsecret=/secrets/jwtsecret
+      --authrpc.vhosts=*
+      --metrics
+      --metrics.addr=0.0.0.0
+      --metrics.port=6060
+      --syncmode=snap
+      --maxpeers=50
+      --ipcdisable
+      --rpc.evmtimeout=5s
+    networks:
+      - hoodi-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Lighthouse (Consensus Client) 
+  lighthouse:
+    image: sigp/lighthouse:latest
+    container_name: lighthouse-hoodi
+    restart: unless-stopped
+    ports:
+      - "9001:9000/tcp"    # P2P (porta externa diferente da Holesky)
+      - "9001:9000/udp"    # P2P (porta externa diferente da Holesky)
+      - "5052:5052"        # HTTP API
+      - "5054:5054"        # Metrics
+    volumes:
+      - ${CONSENSUS_DATA_PATH:-./consensus-data-hoodi}:/root/.lighthouse
+      - ${ROCKETPOOL_DATA_PATH:-./rocketpool-hoodi}/secrets:/secrets:rw
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command: >
+      lighthouse bn
+      --network=hoodi
+      --datadir=/root/.lighthouse
+      --http
+      --http-address=0.0.0.0
+      --http-port=5052
+      --execution-endpoint=http://geth-hoodi:8551
+      --execution-jwt=/secrets/jwtsecret
+      --metrics
+      --metrics-address=0.0.0.0
+      --metrics-port=5054
+      --port=9000
+      --discovery-port=9000
+      --block-cache-size=10
+      --historic-state-cache-size=4
+      --auto-compact-db=true
+      --checkpoint-sync-url=https://checkpoint-sync.hoodi.ethpandaops.io
+      --checkpoint-sync-url-timeout=600
+      --target-peers=25
+      --enr-tcp-port=9000
+      --enr-udp-port=9000
+      --subscribe-all-subnets
+      --disable-upnp
+      --enable-private-discovery
+      --disable-enr-auto-update
+    networks:
+      - hoodi-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # MEV-Boost (para construção de blocos otimizada)
+  mev-boost:
+    image: flashbots/mev-boost:latest
+    container_name: mev-boost-hoodi
+    restart: unless-stopped
+    ports:
+      - "18550:18550"
+    command: >
+      -hoodi
+      -addr=0.0.0.0:18550
+      -relay-check
+      -relays=https://0xafa4c6985aa049fb79dd37010438cfebeb0f2bd42b115b89dd678dab0670c1de38da0c4e9138c9290a398ecd9a0b3110@boost-relay-hoodi.flashbots.net,https://0x821f2a65afb70e7f2e820a925a9b4c80a159620582c1766b1b09729fec178b11ea22abb3a51f07b288be815a1a2ff516@bloxroute.hoodi.blxrbdn.com
+    networks:
+      - hoodi-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Serviços de monitoramento
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-hoodi
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ${PROMETHEUS_DATA_PATH:-./prometheus-data-hoodi}:/prometheus
+      - ./prometheus-hoodi.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts/node-alerts.yml:/etc/prometheus/alerts.yml:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--storage.tsdb.retention.size=5GB'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.external-url=http://localhost:9090'
+    networks:
+      - hoodi-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-hoodi
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ${GRAFANA_DATA_PATH:-./grafana-data-hoodi}:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    networks:
+      - hoodi-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter-hoodi
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - hoodi-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  hoodi-network:
+    driver: bridge
+    name: hoodi-network
