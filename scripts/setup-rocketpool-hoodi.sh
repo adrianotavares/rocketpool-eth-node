@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script para configurar o Rocket Pool na testnet Hoodi
+# Script para configuração inicial do Rocket Pool na testnet Hoodi
 # Setup script for Rocket Pool on Hoodi testnet
 
 set -e
@@ -17,122 +17,157 @@ if ! docker ps --filter name=rocketpool-node-hoodi --format "{{.Names}}" | grep 
     exit 1
 fi
 
-echo "📋 Este script irá guiá-lo pela configuração inicial do Rocket Pool na Hoodi:"
-echo "   1. Verificar status do nó"
-echo "   2. Criar/importar wallet"
-echo "   3. Registrar nó na rede"
-echo "   4. Configurar taxa de comissão"
-echo ""
-
-# Função para executar comandos no container
-rp_exec() {
-    docker exec -it rocketpool-node-hoodi rocketpool "$@"
+# Função para executar comandos via API com timeout
+rp_api() {
+    timeout 30 docker exec rocketpool-node-hoodi rocketpool api "$@" 2>/dev/null || return 1
 }
 
-# 1. Verificar status do nó
-echo "1️⃣  Verificando status do nó..."
-echo "================================"
-rp_exec node status
+# Função para executar comandos CLI interativos
+rp_cli() {
+    docker exec -it rocketpool-node-hoodi rocketpool-cli --allow-root "$@"
+}
+
+echo "📋 Este script irá:"
+echo "   1. Verificar/corrigir configuração"
+echo "   2. Configurar senha da wallet"
+echo "   3. Importar/criar wallet"
+echo "   4. Verificar sincronização"
 echo ""
 
-# 2. Verificar se já existe uma wallet
-echo "2️⃣  Verificando wallet..."
-echo "========================"
-if rp_exec wallet status 2>/dev/null | grep -q "No wallet found"; then
-    echo "🆕 Nenhuma wallet encontrada. Vamos criar uma nova."
-    echo ""
-    echo "Escolha uma opção:"
-    echo "a) Criar nova wallet"
-    echo "b) Importar wallet existente"
-    echo ""
-    read -p "Digite sua escolha (a/b): " wallet_choice
+# 1. Verificar e corrigir configuração se necessário
+echo "1️⃣  Verificando configuração..."
+echo "==============================="
+
+# Testar conectividade atual
+if ! rp_api node sync >/dev/null 2>&1; then
+    echo "🔧 Corrigindo configuração de conectividade..."
     
-    case $wallet_choice in
-        a|A)
-            echo "🔐 Criando nova wallet..."
-            rp_exec wallet init
-            ;;
-        b|B)
-            echo "📥 Importando wallet existente..."
-            rp_exec wallet recover
-            ;;
-        *)
-            echo "❌ Opção inválida!"
-            exit 1
-            ;;
-    esac
+    # Criar configuração para modo external com nomes corretos
+    cat > /tmp/rocketpool-config.yml << 'EOF'
+root:
+  version: "1.16.0"
+  network: "testnet"
+  isNative: false
+  executionClientMode: external
+  consensusClientMode: external
+  externalExecutionHttpUrl: http://geth-hoodi:8545
+  externalExecutionWsUrl: ws://geth-hoodi:8546
+  externalConsensusHttpUrl: http://lighthouse-hoodi:5052
+  enableMetrics: true
+  enableMevBoost: true
+EOF
+    
+    docker cp /tmp/rocketpool-config.yml rocketpool-node-hoodi:/.rocketpool/user-settings.yml
+    docker restart rocketpool-node-hoodi
+    
+    echo "⏳ Aguardando reinicialização..."
+    sleep 20
+    rm -f /tmp/rocketpool-config.yml
+    echo "✅ Configuração corrigida!"
 else
-    echo "✅ Wallet já existe!"
-    rp_exec wallet status
+    echo "✅ Configuração OK!"
 fi
 
 echo ""
 
-# 3. Verificar sincronização antes de registrar
-echo "3️⃣  Verificando sincronização..."
-echo "==============================="
-rp_exec node sync
-echo ""
+# 2. Configurar senha da wallet
+echo "2️⃣  Configurando senha da wallet..."
+echo "==================================="
 
-read -p "Os clientes estão sincronizados? (y/n): " synced
-if [[ $synced != "y" && $synced != "Y" ]]; then
-    echo "⏱️  Aguarde a sincronização completa antes de registrar o nó."
-    echo "   Execute este script novamente quando estiver sincronizado."
-    exit 0
-fi
+wallet_status=$(rp_api wallet status || echo '{"passwordSet":false}')
+password_set=$(echo "$wallet_status" | grep -o '"passwordSet":[^,]*' | cut -d':' -f2 | tr -d ' ')
 
-# 4. Registrar nó (se ainda não estiver registrado)
-echo "4️⃣  Verificando registro do nó..."
-echo "==============================="
-if rp_exec node status | grep -q "The node is not registered"; then
-    echo "📝 Registrando nó na rede Hoodi..."
-    echo ""
-    echo "⚠️  Você precisará de ETH de teste da Hoodi para pagar as taxas de gas."
-    echo "   Faucet recomendado: Solicite na comunidade EthPandaOps"
-    echo ""
-    read -p "Continuar com o registro? (y/n): " register_choice
+if [[ "$password_set" != "true" ]]; then
+    echo "🔐 Configurando senha padrão para testnet..."
     
-    if [[ $register_choice == "y" || $register_choice == "Y" ]]; then
-        rp_exec node register
+    if rp_api wallet set-password "testnet123456"; then
+        echo "✅ Senha configurada: testnet123456"
     else
-        echo "⏸️  Registro cancelado. Execute este script novamente quando quiser registrar."
-        exit 0
+        echo "⚠️  Falha ao configurar senha automaticamente"
+        echo "   Configure manualmente depois com: rocketpool-cli wallet set-password"
     fi
 else
-    echo "✅ Nó já está registrado!"
+    echo "✅ Senha já configurada!"
 fi
 
 echo ""
 
-# 5. Configurar taxa de comissão (se ainda não configurada)
-echo "5️⃣  Configurando taxa de comissão..."
-echo "===================================="
-echo "💡 Recomendação para testnet: 10-15%"
-echo ""
-read -p "Deseja configurar a taxa de comissão agora? (y/n): " commission_choice
+# 3. Verificar/criar wallet
+echo "3️⃣  Configurando wallet..."
+echo "=========================="
 
-if [[ $commission_choice == "y" || $commission_choice == "Y" ]]; then
-    read -p "Digite a taxa de comissão desejada (ex: 15 para 15%): " commission_rate
-    rp_exec node set-commission-rate $commission_rate
+wallet_status=$(rp_api wallet status || echo '{"walletInitialized":false}')
+wallet_initialized=$(echo "$wallet_status" | grep -o '"walletInitialized":[^,]*' | cut -d':' -f2 | tr -d ' ')
+
+if [[ "$wallet_initialized" != "true" ]]; then
+    echo "🦊 Para importar sua wallet MetaMask, digite a seed phrase (12/24 palavras):"
+    echo "   Ou pressione ENTER para criar uma nova wallet"
+    echo ""
+    read -p "Seed phrase (opcional): " mnemonic_phrase
+    echo ""
+    
+    if [ -n "$mnemonic_phrase" ]; then
+        echo "🔄 Importando wallet da MetaMask..."
+        if rp_cli wallet recover --mnemonic "$mnemonic_phrase"; then
+            echo "✅ Wallet importada com sucesso!"
+        else
+            echo "❌ Erro ao importar. Verifique a seed phrase."
+            exit 1
+        fi
+    else
+        echo "🆕 Criando nova wallet..."
+        if rp_cli wallet init; then
+            echo "✅ Nova wallet criada!"
+            echo "⚠️  IMPORTANTE: Anote sua seed phrase em local seguro!"
+        else
+            echo "❌ Erro ao criar wallet."
+            exit 1
+        fi
+    fi
+else
+    echo "✅ Wallet já configurada!"
+fi
+
+echo ""
+
+# 4. Verificar sincronização
+echo "4️⃣  Verificando sincronização..."
+echo "==============================="
+
+echo "🔍 Verificando status dos clientes..."
+if sync_status=$(rp_api node sync 2>/dev/null); then
+    echo "✅ Clientes conectados!"
+    echo ""
+    
+    # Mostrar status resumido
+    if echo "$sync_status" | grep -q '"ecSynced":true' && echo "$sync_status" | grep -q '"bcSynced":true'; then
+        echo "🎉 Ambos os clientes estão sincronizados!"
+        echo ""
+        echo "📝 Próximos passos:"
+        echo "   1. Obter ETH de teste da Hoodi"
+        echo "   2. Registrar nó: rocketpool-cli node register"
+        echo "   3. Monitorar: http://localhost:3000 (Grafana)"
+    else
+        echo "⏳ Clientes ainda sincronizando..."
+        echo "   Aguarde a sincronização completa antes de registrar o nó"
+        echo ""
+        echo "📊 Monitor: http://localhost:3000 (admin/admin123)"
+    fi
+else
+    echo "⚠️  Problema na comunicação com clientes"
+    echo "   Verifique logs: docker logs geth-hoodi"
+    echo "                  docker logs lighthouse-hoodi"
 fi
 
 echo ""
 echo "✅ Configuração inicial concluída!"
 echo ""
-echo "🔍 Comandos úteis para monitoramento:"
-echo "   - Status geral: docker exec -it rocketpool-node-hoodi rocketpool node status"
-echo "   - Status wallet: docker exec -it rocketpool-node-hoodi rocketpool wallet status"
-echo "   - Sincronização: docker exec -it rocketpool-node-hoodi rocketpool node sync"
-echo "   - Recompensas: docker exec -it rocketpool-node-hoodi rocketpool node rewards"
+echo "🔍 Comandos úteis:"
+echo "   - Status: docker exec rocketpool-node-hoodi rocketpool api node status"
+echo "   - Wallet: docker exec rocketpool-node-hoodi rocketpool api wallet status"
+echo "   - Sync: docker exec rocketpool-node-hoodi rocketpool api node sync"
 echo ""
-echo "🌐 Recursos da Hoodi:"
+echo "🌐 Recursos:"
 echo "   - Explorer: https://explorer.hoodi.ethpandaops.io/"
-echo "   - Checkpoint: https://checkpoint-sync.hoodi.ethpandaops.io"
-echo "   - Grafana: http://localhost:3000 (admin/admin123)"
-echo ""
-echo "📚 Próximos passos:"
-echo "   1. Aguardar sincronização completa"
-echo "   2. Obter ETH de teste para staking"
-echo "   3. Configurar validadores (se aplicável)"
-echo "   4. Monitorar performance via Grafana"
+echo "   - Grafana: http://localhost:3000"
 echo ""

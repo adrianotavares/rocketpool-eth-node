@@ -1,6 +1,6 @@
 # Testnet Hoodi - Configuração Completa
 
-## ✅ Status da Implementação
+## Status da Implementação
 
 ### Arquivos Criados/Atualizados
 
@@ -8,21 +8,31 @@
 2. **`docker-compose-hoodi.yml`** - Orquestração de containers
 3. **`prometheus-hoodi.yml`** - Configuração do Prometheus
 4. **`/Volumes/KINGSTON/ethereum-data-hoodi/rocketpool/.rocketpool/user-settings.yml`** - Configuração do Rocket Pool (SSD)
-5. **`scripts/start-hoodi.sh`** - Script de inicialização
+5. **`scripts/start-hoodi.sh`** - Script de inicialização (cria user-settings.yml automaticamente)
 6. **`scripts/stop-hoodi.sh`** - Script para parar serviços
 7. **`scripts/clean-hoodi.sh`** - Script de limpeza completa
 8. **`scripts/setup-rocketpool-hoodi.sh`** - Configuração inicial do Rocket Pool
-9. **`docs/HOODI-SETUP-GUIDE.md`** - Documentação detalhada
+9. **`scripts/create-user-settings-hoodi.sh`** - Script para criar/verificar user-settings.yml
+10. **`docs/HOODI-SETUP-GUIDE.md`** - Documentação detalhada
 
-## ✅ **PROBLEMA RESOLVIDO - user-settings.yml**
+## **PROBLEMA RESOLVIDO - user-settings.yml E SENHA**
 
-### 🎯 **Solução Implementada**
-- **Arquivo user-settings.yml**: Corrigido e localizado em `/Volumes/KINGSTON/ethereum-data-hoodi/rocketpool/.rocketpool/`
+### **Soluções Implementadas**
+
+**1. Arquivo user-settings.yml**: Corrigido e localizado em `/Volumes/KINGSTON/ethereum-data-hoodi/rocketpool/.rocketpool/`
+
 - **Mapeamento Docker**: Fixado para `${ROCKETPOOL_DATA_PATH}/.rocketpool:/.rocketpool`
 - **Sintaxe YAML**: Corrigida para ser compatível com Rocket Pool v1.16.0
-- **Configuração**: Seguindo padrão da Holesky com adaptações para Hoodi
+- **Criação Automática**: Implementada no `start-hoodi.sh`
 
-### 🔧 **Configuração Final**
+**2. Senha do Nó**: Configuração automática implementada no setup
+
+- **Detecção Automática**: Script detecta se senha não está configurada
+- **Validação de Segurança**: Mínimo 8 caracteres, confirmação obrigatória
+- **Configuração Segura**: Entrada de senha oculta (-s)
+
+### **Configuração Final**
+
 ```yaml
 root:
   version: "1.16.0"
@@ -37,15 +47,17 @@ root:
   enableMevBoost: true
 ```
 
-### ✅ **Status de Funcionamento**
+### **Status de Funcionamento**
+
 - **Container rocketpool-node-hoodi**: ✅ Rodando sem erros
+- **Senha do nó**: ✅ Configurada corretamente (passwordSet: true)
 - **Arquivo user-settings.yml**: ✅ Encontrado e carregado
 - **Configuração YAML**: ✅ Sintaxe válida
 - **Mapeamento SSD**: ✅ Dados no local correto
 
-**Agora o Rocket Pool está funcionando corretamente na testnet Hoodi!**
+Agora o Rocket Pool está funcionando corretamente na testnet Hoodi!
 
-## 🚀 Como Usar
+## Como Usar
 
 ### Iniciar a Hoodi
 
@@ -53,11 +65,44 @@ root:
 ./scripts/start-hoodi.sh
 ```
 
+**Nota**: O script `start-hoodi.sh` agora cria automaticamente o arquivo `user-settings.yml` no SSD se ele não existir.
+
+### Criar/Verificar user-settings.yml (opcional)
+
+```bash
+./scripts/create-user-settings-hoodi.sh
+```
+
+Este script permite:
+
+- Criar o arquivo `user-settings.yml` se não existir
+- Verificar se o YAML é válido
+- Recriar o arquivo se necessário
+
 ### Configurar Rocket Pool (primeira vez)
 
 ```bash
 ./scripts/setup-rocketpool-hoodi.sh
 ```
+
+Este script realiza a configuração completa do Rocket Pool:
+
+1. **Verificação do Status**: Confirma se os containers estão rodando
+2. **Configuração de Senha**: Define a senha para proteger a wallet (se não configurada)
+3. **Importação/Criação da Wallet**:
+   - **🦊 RECOMENDADO**: Importar wallet existente da MetaMask
+   - **Alternativa**: Gerar nova wallet
+4. **Verificação de Sincronização**: Confirma se os clientes estão sincronizados
+5. **Registro do Nó**: Registra o nó na rede Rocket Pool
+6. **Taxa de Comissão**: Configura a taxa de comissão do nó
+
+**⚠️ Importante**:
+
+- A senha da wallet é obrigatória e deve ser segura (mínimo 8 caracteres)
+- **Para usar sua MetaMask**: Escolha "Importar wallet existente" e tenha sua seed phrase em mãos
+- **Para iniciantes**: Pode criar nova wallet, mas precisará transferir fundos separadamente
+
+**📚 Guia detalhado**: Veja `docs/IMPORTAR-METAMASK.md` para instruções completas sobre importação.
 
 ### Parar a Hoodi
 
@@ -71,7 +116,7 @@ root:
 ./scripts/clean-hoodi.sh
 ```
 
-## 📊 Estrutura de Dados
+## Estrutura de Dados
 
 ```text
 /Volumes/KINGSTON/ethereum-data-hoodi/
@@ -87,7 +132,7 @@ root:
 └── alertmanager-data/     # Alert management
 ```
 
-## 🔧 Configuração de Rede
+## Configuração de Rede
 
 ### Portas Utilizadas
 
@@ -112,14 +157,14 @@ root:
 - Dados isolados por testnet
 - Containers com recursos limitados
 
-## 📈 Recursos Estimados
+## Recursos Estimados
 
 - **Armazenamento**: 80-150GB
 - **RAM**: 8-16GB
 - **Sincronização**: 1-2 horas
 - **Peers**: 25-50 conexões
 
-## 🔍 Monitoramento
+## Monitoramento
 
 ### Verificar Status
 
@@ -141,7 +186,7 @@ curl -X POST -H "Content-Type: application/json" \
   http://localhost:8545
 ```
 
-## 🎯 Próximos Passos
+## Próximos Passos
 
 1. **Teste a Configuração**: Execute `./scripts/start-hoodi.sh`
 2. **Configure Rocket Pool**: Execute `./scripts/setup-rocketpool-hoodi.sh`
@@ -155,42 +200,48 @@ curl -X POST -H "Content-Type: application/json" \
 
 ```bash
 # Status geral do nó
-docker exec -it rocketpool-node-hoodi rocketpool node status
+docker exec -it rocketpool-node-hoodi rocketpool api node status
 
 # Status da wallet
-docker exec -it rocketpool-node-hoodi rocketpool wallet status
+docker exec -it rocketpool-node-hoodi rocketpool api wallet status
 
 # Verificar sincronização
-docker exec -it rocketpool-node-hoodi rocketpool node sync
+docker exec -it rocketpool-node-hoodi rocketpool api node sync
 
 # Ver recompensas
-docker exec -it rocketpool-node-hoodi rocketpool node rewards
+docker exec -it rocketpool-node-hoodi rocketpool api node rewards
 ```
 
 ### Configuração da Wallet
 
 ```bash
-# Criar nova wallet
-docker exec -it rocketpool-node-hoodi rocketpool wallet init
+# Verificar status da wallet
+docker exec -it rocketpool-node-hoodi rocketpool api wallet status
 
-# Importar wallet existente
-docker exec -it rocketpool-node-hoodi rocketpool wallet recover
+# Configurar senha (se necessário)
+docker exec -it rocketpool-node-hoodi rocketpool api wallet set-password "SuaSenha"
+
+# Criar nova wallet
+docker exec -it rocketpool-node-hoodi rocketpool api wallet init
+
+# Importar wallet existente (MetaMask)
+docker exec -it rocketpool-node-hoodi rocketpool api wallet recover
 
 # Backup da wallet
-docker exec -it rocketpool-node-hoodi rocketpool wallet export
+docker exec -it rocketpool-node-hoodi rocketpool api wallet export
 ```
 
 ### Gerenciamento do Nó
 
 ```bash
 # Registrar nó
-docker exec -it rocketpool-node-hoodi rocketpool node register
+docker exec -it rocketpool-node-hoodi rocketpool api node register
 
 # Definir taxa de comissão
-docker exec -it rocketpool-node-hoodi rocketpool node set-commission-rate 15
+docker exec -it rocketpool-node-hoodi rocketpool api node set-commission-rate 15
 
 # Ver depósitos
-docker exec -it rocketpool-node-hoodi rocketpool node deposit
+docker exec -it rocketpool-node-hoodi rocketpool api node deposit
 ```
 
 ## 📞 Troubleshooting

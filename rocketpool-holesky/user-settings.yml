@@ -21,12 +21,12 @@ smartnode:
 
 # Configuração do cliente de execução externo
 externalExecution:
-  httpUrl: http://geth:8545     # HTTP RPC do Geth
-  wsUrl: ws://geth:8546         # WebSocket do Geth
+  httpUrl: http://geth-hoodi:8545     # HTTP RPC do Geth
+  wsUrl: ws://geth-hoodi:8546         # WebSocket do Geth
 
 # Configuração do cliente de consenso externo
 externalLighthouse:
-  httpUrl: http://lighthouse:5052     # HTTP API do Lighthouse
+  httpUrl: http://lighthouse-hoodi:5052     # HTTP API do Lighthouse
 
 # Observações para Testnet Holesky:
 # - Chain ID: 17000 (diferente da mainnet que é 1)

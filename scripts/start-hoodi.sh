@@ -45,11 +45,48 @@ mkdir -p "$PROMETHEUS_DATA_PATH"
 mkdir -p "$GRAFANA_DATA_PATH"
 mkdir -p "$ALERTMANAGER_DATA_PATH"
 
-# Verificar se user-settings.yml existe no SSD
+# Verificar se user-settings.yml existe no SSD, se não criar automaticamente
 if [ ! -f "$ROCKETPOOL_DATA_PATH/.rocketpool/user-settings.yml" ]; then
-    echo "⚠️  Arquivo user-settings.yml não encontrado no SSD!"
-    echo "   Esperado em: $ROCKETPOOL_DATA_PATH/.rocketpool/user-settings.yml"
-    echo "   O Rocket Pool pode não funcionar corretamente sem este arquivo."
+    echo "📄 Criando user-settings.yml no SSD..."
+    cat > "$ROCKETPOOL_DATA_PATH/.rocketpool/user-settings.yml" << 'EOF'
+# Rocket Pool v1.16.0 - Configuração para Testnet Hoodi
+# Baseado no template oficial (user-settings.template.yml)
+# Configuração para Rocket Pool v1.16.0 em modo híbrido (Docker)
+# Testnet Hoodi (Chain ID: 560048)
+
+root:
+  version: "1.16.0"
+  network: "testnet"
+  isNative: false
+  executionClientMode: external
+  consensusClientMode: external
+  
+  # URLs dos clientes externos (nomes dos containers Docker para Hoodi)
+  externalExecutionHttpUrl: http://geth-hoodi:8545
+  externalExecutionWsUrl: ws://geth-hoodi:8546
+  externalConsensusHttpUrl: http://lighthouse-hoodi:5052
+  
+  # Configurações adicionais para testnet
+  enableMetrics: true
+  enableMevBoost: true
+
+# Configurações específicas da Testnet Hoodi:
+# - Chain ID: 560048 (0x89010 em hexadecimal)
+# - Rede: Hoodi (nova geração de testnet)
+# - Genesis: 2024-05-10 12:00:00 UTC
+# - Checkpoint Sync: https://checkpoint-sync.hoodi.ethpandaops.io
+# - Explorer: https://explorer.hoodi.ethpandaops.io/
+# - ETH de teste: Disponível via faucets da EthPandaOps
+# 
+# Comandos básicos:
+# - Status: docker exec -it rocketpool-node-hoodi rocketpool node status
+# - Sync: docker exec -it rocketpool-node-hoodi rocketpool node sync
+# - Wallet: docker exec -it rocketpool-node-hoodi rocketpool wallet status
+# - Node: docker exec -it rocketpool-node-hoodi rocketpool node register
+EOF
+    echo "✅ user-settings.yml criado em $ROCKETPOOL_DATA_PATH/.rocketpool/user-settings.yml"
+else
+    echo "✅ user-settings.yml já existe no SSD"
 fi
 
 # Gerar JWT secret se não existir
@@ -62,6 +99,7 @@ fi
 # Configurar permissões
 echo "🔒 Configurando permissões..."
 chmod 600 "$ROCKETPOOL_DATA_PATH/secrets/jwtsecret"
+chmod 644 "$ROCKETPOOL_DATA_PATH/.rocketpool/user-settings.yml"
 chmod -R 755 "$ROCKETPOOL_DATA_PATH"
 chmod -R 755 "$EXECUTION_DATA_PATH"
 chmod -R 755 "$CONSENSUS_DATA_PATH"
@@ -70,13 +108,17 @@ chmod -R 755 "$GRAFANA_DATA_PATH"
 chmod -R 755 "$ALERTMANAGER_DATA_PATH"
 
 # Mostrar informações dos diretórios
-echo "� Informações dos diretórios criados:"
+echo "📊 Informações dos diretórios criados:"
 echo "   - Rocket Pool: $ROCKETPOOL_DATA_PATH"
 echo "   - Execution:   $EXECUTION_DATA_PATH"
 echo "   - Consensus:   $CONSENSUS_DATA_PATH"
 echo "   - Prometheus:  $PROMETHEUS_DATA_PATH"
 echo "   - Grafana:     $GRAFANA_DATA_PATH"
 echo "   - Alertmanager: $ALERTMANAGER_DATA_PATH"
+echo ""
+echo "📄 Arquivos de configuração:"
+echo "   - user-settings.yml: $ROCKETPOOL_DATA_PATH/.rocketpool/user-settings.yml"
+echo "   - JWT Secret: $ROCKETPOOL_DATA_PATH/secrets/jwtsecret"
 
 # Iniciar serviços
 echo "🐳 Iniciando containers Docker..."
